@@ -1,0 +1,2181 @@
+<title>Growth Challenge</title>
+<style>
+  /* Palette lifted from the mascot reference: warm cream ground, peach seed,
+     leaf/forest green stem, olive-gold root, coral for trouble events. No
+     blue - the reference art doesn't use it, so "water" leans teal-green
+     instead of sky blue to stay in the same family. */
+  :root{
+    --bg-top:#FBEFDA; --bg-bottom:#F3DCB9; --panel:#FFFDF8; --panel-2:#F6E7CF; --card-bg:#FFFDF8;
+    --ink:#4A3B2E; --ink-soft:#8A7360; --line: rgba(74,59,46,.14); --line-strong: rgba(74,59,46,.26);
+    --stem:#8CC63F; --stem-deep:#2F8A4C; --root:#B58A3D; --root-deep:#8C6A2C; --seed:#F3D3C4; --seed-deep:#E0B3A0;
+    --sun:#E4C062; --sun-deep:#C99A32; --wall:#A8543C; --wall-deep:#7E3D2A; --water:#4A87C0; --water-deep:#356792;
+    --nutrient:#6FA84E; --nutrient-deep:#4F7F35; --danger:#E5897C; --danger-deep:#C36255;
+    --soil:#C9A66C; --soil-deep:#A8824C; --sky:#BFDDEF; --sky-deep:#9BC4DE;
+    --shadow:0 2px 4px rgba(74,59,46,.12), 0 10px 26px rgba(74,59,46,.16);
+    --radius-sm:8px; --radius-md:14px; --radius-lg:22px;
+    --font-display: -apple-system, 'Segoe UI', system-ui, sans-serif;
+    --font-body: -apple-system, 'Segoe UI', system-ui, sans-serif;
+    --font-mono: ui-monospace,'SF Mono',Menlo,Consolas,monospace;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{
+      --bg-top:#2B2118; --bg-bottom:#1D170F; --panel:#2F2519; --panel-2:#3A2C1C; --card-bg:#2A2016;
+      --ink:#F3E6D8; --ink-soft:#C2AD97; --line: rgba(243,230,216,.14); --line-strong: rgba(243,230,216,.28);
+      --stem:#9ED457; --stem-deep:#4FAE6E; --root:#D2A65C; --root-deep:#A67D3E; --seed:#F6DCCF; --seed-deep:#D9AE99;
+      --sun:#F0CC7A; --sun-deep:#D1A445; --wall:#C97052; --wall-deep:#9A5138; --water:#6BA8DE; --water-deep:#4A85B8;
+      --nutrient:#8CC468; --nutrient-deep:#66984A; --danger:#F0A79B; --danger-deep:#D97D6E;
+      --soil:#8A6E45; --soil-deep:#6B5535; --sky:#2A3D4D; --sky-deep:#1D2B38;
+      --shadow:0 2px 4px rgba(0,0,0,.35), 0 10px 26px rgba(0,0,0,.4);
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg-top:#2B2118; --bg-bottom:#1D170F; --panel:#2F2519; --panel-2:#3A2C1C; --card-bg:#2A2016;
+    --ink:#F3E6D8; --ink-soft:#C2AD97; --line: rgba(243,230,216,.14); --line-strong: rgba(243,230,216,.28);
+    --stem:#9ED457; --stem-deep:#4FAE6E; --root:#D2A65C; --root-deep:#A67D3E; --seed:#F6DCCF; --seed-deep:#D9AE99;
+    --sun:#E4DB9E; --sun-deep:#BFB56E; --wall:#B7A88E; --wall-deep:#8F8168; --water:#7FBCA0; --water-deep:#578E76;
+    --nutrient:#D9B36C; --nutrient-deep:#B08A45; --danger:#F0A79B; --danger-deep:#D97D6E;
+    --soil:#8A6E45; --soil-deep:#6B5535; --sky:#2A3D4D; --sky-deep:#1D2B38;
+    --shadow:0 2px 4px rgba(0,0,0,.35), 0 10px 26px rgba(0,0,0,.4);
+  }
+  :root[data-theme="light"]{
+    --bg-top:#FBEFDA; --bg-bottom:#F3DCB9; --panel:#FFFDF8; --panel-2:#F6E7CF; --card-bg:#FFFDF8;
+    --ink:#4A3B2E; --ink-soft:#8A7360; --line: rgba(74,59,46,.14); --line-strong: rgba(74,59,46,.26);
+    --stem:#8CC63F; --stem-deep:#2F8A4C; --root:#B58A3D; --root-deep:#8C6A2C; --seed:#F3D3C4; --seed-deep:#E0B3A0;
+    --sun:#E4C062; --sun-deep:#C99A32; --wall:#A8543C; --wall-deep:#7E3D2A; --water:#4A87C0; --water-deep:#356792;
+    --nutrient:#6FA84E; --nutrient-deep:#4F7F35; --danger:#E5897C; --danger-deep:#C36255;
+    --soil:#C9A66C; --soil-deep:#A8824C; --sky:#BFDDEF; --sky-deep:#9BC4DE;
+    --shadow:0 2px 4px rgba(74,59,46,.12), 0 10px 26px rgba(74,59,46,.16);
+  }
+
+  *{ box-sizing:border-box; }
+  [hidden]{ display:none !important; }
+  body{
+    margin:0; color:var(--ink); font-family:var(--font-body); font-size:17px; line-height:1.5; min-height:100vh;
+    background:linear-gradient(180deg, var(--bg-top) 0%, var(--bg-bottom) 100%);
+    background-attachment:fixed;
+  }
+  h1,h2,h3{ font-family:var(--font-display); text-wrap:balance; margin:0; }
+  .mono{ font-family:var(--font-mono); font-variant-numeric:tabular-nums; }
+  button{ font-family:inherit; }
+  button:focus-visible, input:focus-visible, [tabindex]:focus-visible{ outline:3px solid var(--water); outline-offset:2px; }
+
+  /* Every screen shares this same outer frame (width, and centered on the
+     same axis), so nothing jumps width or position as the player moves
+     between screens - just a plain narrow centered column, not a
+     viewport-breakout. */
+  .app{ max-width:840px; margin:0 auto; padding:22px 20px 56px; box-sizing:border-box; }
+
+  .masthead{ margin-bottom:18px; text-align:center; }
+  .masthead h1{
+    font-size:clamp(1.8rem, 1.1rem + 2.6vw, 2.7rem); font-weight:800; letter-spacing:-.01em;
+    color:var(--stem-deep);
+    animation: title-in .5s cubic-bezier(.2,1.4,.4,1) both;
+  }
+  @media (prefers-reduced-motion: reduce){ .masthead h1{ animation:none; } }
+  @keyframes title-in{ from{ opacity:0; transform:translateY(-6px) scale(.96);} to{ opacity:1; transform:none; } }
+
+  .primary-btn{
+    background:var(--stem); color:#fff; border:none; border-radius:999px;
+    padding:16px 34px; font-size:1.2rem; font-weight:800; letter-spacing:.01em; cursor:pointer;
+    box-shadow:0 4px 0 var(--stem-deep), var(--shadow);
+    transition:transform .12s ease, box-shadow .12s ease, filter .12s ease;
+  }
+  .primary-btn:hover{ filter:brightness(1.05); transform:translateY(-1px); }
+  .primary-btn:active{ transform:translateY(3px); box-shadow:0 1px 0 var(--stem-deep); }
+  .primary-btn:disabled{ opacity:.5; cursor:not-allowed; transform:none; box-shadow:0 4px 0 var(--stem-deep); }
+  .ghost-btn{
+    background:transparent; color:var(--ink-soft); border:none; text-decoration:underline;
+    font-size:.8rem; font-weight:700; cursor:pointer; padding:6px 8px;
+  }
+  .ghost-btn:hover{ color:var(--ink); }
+  /* Always-on-top escape hatch, independent of whichever screen is showing
+     inside .app, so a group can bail out and start over from any point. */
+  .restart-fab{
+    position:fixed; top:16px; right:16px; z-index:40;
+    display:flex; align-items:center; gap:7px; background:var(--card-bg); color:var(--ink-soft);
+    border:2px solid var(--line-strong); border-radius:999px; padding:9px 16px 9px 12px;
+    font-size:.85rem; font-weight:700; cursor:pointer; box-shadow:var(--shadow);
+    transition:color .12s ease, transform .12s ease;
+  }
+  .restart-fab .icon-svg{ width:16px; height:16px; }
+  .restart-fab:hover{ color:var(--ink); transform:translateY(-1px); }
+  .restart-fab:active{ transform:translateY(0); }
+  @media (max-width:520px){ .restart-fab span{ display:none; } .restart-fab{ padding:10px; } }
+
+  /* ---------- setup ---------- */
+  .setup-card{
+    background:var(--panel); border-radius:var(--radius-lg); padding:26px;
+    box-shadow:var(--shadow); display:grid; gap:20px; border:1px solid var(--line);
+    max-width:640px; margin:0 auto;
+  }
+  .field-row{ display:grid; grid-template-columns: 1fr; gap:8px; }
+  .field-row label{ font-size:.78rem; letter-spacing:.03em; text-transform:uppercase; color:var(--ink-soft); font-weight:700; }
+  .field-row input[type=number]{
+    width:100%; max-width:120px; padding:9px 12px; border-radius:var(--radius-sm);
+    border:2px solid var(--line-strong); background:var(--panel-2); color:var(--ink); font-size:1.05rem; font-weight:600;
+  }
+  input[type=range]{ width:100%; accent-color:var(--stem); }
+  .radius-hint{ font-size:.78rem; color:var(--ink-soft); }
+  .group-name-grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(140px,1fr)); gap:10px; }
+  .group-name-grid input{
+    width:100%; padding:9px 12px; border-radius:var(--radius-sm); border:2px solid var(--line-strong);
+    background:var(--panel-2); color:var(--ink); font-size:.9rem; font-weight:600;
+  }
+  .group-swatch{ display:inline-block; width:.8em; height:.8em; border-radius:50%; margin-right:6px; vertical-align:middle; box-shadow:0 0 0 2px rgba(255,255,255,.5) inset; }
+
+  .mode-toggle{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  .mode-option{
+    display:flex; flex-direction:column; align-items:center; gap:4px; text-align:center;
+    padding:12px 10px; border-radius:var(--radius-sm); border:2px solid var(--line-strong);
+    background:var(--panel-2); color:var(--ink); font-family:inherit; cursor:pointer;
+  }
+  .mode-option .mode-title{ font-family:var(--font-display); font-weight:800; font-size:1.05rem; }
+  .mode-option .mode-sub{ font-size:.72rem; color:var(--ink-soft); }
+  .mode-option.selected{ border-color:var(--stem); background:color-mix(in srgb, var(--stem) 16%, var(--panel-2)); }
+  .mode-option.selected .mode-title{ color:var(--stem-deep); }
+
+  /* ---------- ready screen ---------- */
+  .ready-screen{ display:flex; flex-direction:column; align-items:center; gap:22px; text-align:center; padding:24px 0; }
+  .ready-screen h2{ font-size:1.7rem; font-weight:800; }
+  .ready-list{ display:flex; flex-wrap:wrap; gap:10px; justify-content:center; max-width:480px; }
+  .ready-chip{
+    display:flex; align-items:center; gap:7px; background:var(--panel); border-radius:999px;
+    padding:9px 18px; font-weight:700; box-shadow:var(--shadow); font-size:1.05rem;
+  }
+
+  /* ---------- interactive tutorial ---------- */
+  /* Same shape as the growth screen (instruction card above a board, result
+     banner below) since it's teaching that exact screen by having the
+     player actually use a scaled-down version of it, not just describing it. */
+  .tutorial-screen{
+    display:flex; flex-direction:column; align-items:center; gap:14px; text-align:center;
+    width:100%; padding:8px 0 24px;
+  }
+  .tutorial-screen h2{ font-size:1.6rem; font-weight:800; }
+  .tutorial-instruction{ display:flex; flex-direction:column; align-items:center; gap:8px; width:100%; }
+  .tutorial-goal{
+    font-family:var(--font-display); font-weight:800; font-size:1.15rem; color:var(--stem-deep);
+    background:var(--panel-2); padding:12px 26px; border-radius:999px;
+  }
+
+  /* ---------- turn intro ---------- */
+  .turn-intro{
+    display:flex; flex-direction:column; align-items:center; justify-content:center; gap:22px;
+    min-height:46vh; text-align:center;
+  }
+  /* Fixed at roughly the same height the board's own center lands at on the
+     growth screen (the board dominates that layout, so its middle sits
+     close to the viewport's vertical center) - so tapping Draw and then
+     tapping cells on the board don't jump between a high spot and a low
+     one. Big touch display in a classroom, so a consistent tap height
+     matters more than technically being reachable-but-in-a-different-spot
+     every screen. */
+  #drawBtn{
+    position:fixed; left:50%; top:50vh; transform:translate(-50%,-50%); z-index:15;
+  }
+  .turn-intro .name{
+    font-family:var(--font-display); font-size:2.3rem; font-weight:800;
+    animation: name-in .4s cubic-bezier(.2,1.6,.3,1) both;
+  }
+  @keyframes name-in{ from{ transform:scale(.85); opacity:0;} to{ transform:scale(1); opacity:1;} }
+  @media (prefers-reduced-motion: reduce){ .turn-intro .name{ animation:none; } }
+  .turn-intro .round{ color:var(--ink-soft); font-size:.95rem; font-weight:700; letter-spacing:.03em; }
+
+  /* ---------- outcome modal (setbacks only) ---------- */
+  /* Shared by the slot-machine roll/land states below - one draw button
+     always leads to this same reveal screen, whether it turns out to be a
+     growth choice or a setback, so the interface itself never gives away
+     which kind was drawn before the roll finishes. */
+  @keyframes roll-jitter{
+    0%{ transform:translateY(0) scale(1); } 50%{ transform:translateY(-2px) scale(1.04); } 100%{ transform:translateY(0) scale(1); }
+  }
+  @keyframes land-bounce{
+    0%{ transform:scale(1.16) rotate(-2deg); } 45%{ transform:scale(.94) rotate(1deg); } 100%{ transform:scale(1) rotate(0); }
+  }
+
+  /* ---------- draw reveal (pick one of two cards) ---------- */
+  /* An inline screen like turn-intro/growth-screen, not a popup - so it
+     never sits on top of the board, just replaces the current screen. */
+  /* .app is already the full breakout width now, so this just fills it. */
+  .choice-screen{
+    display:flex; flex-direction:column; align-items:center; gap:16px; text-align:center;
+    width:100%;
+  }
+  /* Board, then group pill/title/card, stacked in one centered column -
+     there's no second option needing its own side-by-side column anymore
+     now that a draw only ever reveals one outcome. */
+  .choice-layout{
+    display:flex; flex-direction:column; align-items:center; gap:16px; width:100%;
+  }
+  .choice-status{ display:flex; flex-direction:column; align-items:center; gap:10px; width:100%; }
+  .side-title{ font-size:1.1rem; font-weight:800; text-align:center; }
+  .choice-options{
+    display:flex; flex-direction:column; gap:14px; width:100%; justify-content:center;
+  }
+  /* Purely a display card now (the draw only ever lands on one outcome,
+     nothing to pick), so no hover/cursor affordance. */
+  .choice-option{
+    display:flex; flex-direction:column; align-items:center; gap:8px; padding:18px 14px;
+    border-radius:var(--radius-md); border:2px solid var(--line-strong); background:var(--panel-2);
+  }
+  .choice-icon{ width:56px; height:56px; position:relative; }
+  .choice-icon .icon-svg{ width:100%; height:100%; }
+  .choice-title{ font-family:var(--font-display); font-weight:800; font-size:1.05rem; }
+  .choice-desc{ font-size:.88rem; color:var(--ink-soft); min-height:1.25em; }
+  /* How many cells grow/are removed, at a glance - overlaid on the icon
+     instead of buried in the description text. */
+  .step-badge{
+    position:absolute; bottom:-4px; right:-4px; min-width:22px; height:22px; padding:0 5px;
+    border-radius:999px; display:flex; align-items:center; justify-content:center;
+    font-family:var(--font-mono); font-weight:800; font-size:.72rem; color:#fff;
+    box-shadow:var(--shadow); z-index:3;
+  }
+  .step-badge.positive{ background:var(--stem-deep); }
+  .step-badge.negative{ background:var(--danger-deep); }
+
+  /* slot-machine roll for the reveal card */
+  .choice-option.rolling{ animation: choice-roll-glow .32s ease-in-out infinite; }
+  @keyframes choice-roll-glow{
+    0%,100%{ box-shadow:none; }
+    50%{ box-shadow:0 0 0 4px color-mix(in srgb, var(--stem) 28%, transparent); }
+  }
+  .choice-option.rolling .choice-icon{ animation: roll-jitter .1s linear infinite; }
+  .choice-option.landed{ animation: land-bounce .5s cubic-bezier(.2,1.8,.3,1); }
+  @media (prefers-reduced-motion: reduce){
+    .choice-option.rolling, .choice-option.rolling .choice-icon, .choice-option.landed{ animation:none; }
+  }
+
+  /* ---------- growth screen ---------- */
+  /* Same width as choice-screen (both just fill .app) and the same .wide
+     board size, so picking a direction and picking where to grow present
+     the same size board, not a bigger one that then shrinks back down. */
+  .growth-screen{
+    display:flex; flex-direction:column; gap:14px; align-items:center; text-align:center;
+    width:100%;
+  }
+  /* Group name and score as two separate side-by-side chips, rather than
+     one combined "Name · N pts" pill - the score reads at a glance instead
+     of being buried in smaller text next to the name. */
+  .status-row{ display:flex; gap:12px; width:100%; max-width:420px; }
+  .group-chip{
+    flex:1; background:var(--card-bg); border-radius:999px; padding:11px 16px; box-shadow:var(--shadow);
+    font-family:var(--font-display); font-weight:800; font-size:1.05rem;
+    display:flex; align-items:center; justify-content:center; text-align:center; min-width:0;
+  }
+  .score-chip{
+    flex:1; background:var(--card-bg); border-radius:999px; padding:7px 16px; box-shadow:var(--shadow);
+    display:flex; flex-direction:column; align-items:center; justify-content:center; line-height:1.15;
+  }
+  .score-chip .score-num{ font-family:var(--font-mono); font-weight:800; font-size:1.8rem; color:var(--stem-deep); }
+  .score-chip .score-label{ font-size:.62rem; letter-spacing:.08em; text-transform:uppercase; color:var(--ink-soft); }
+  .growth-instruction{ display:flex; flex-direction:column; align-items:center; gap:8px; width:100%; }
+  /* Same "small card" look as .choice-option, so the event you picked (or
+     the setback you drew) keeps showing here, in the same spot, instead of
+     collapsing into a bare instruction line once you reach the board. */
+  .event-card{
+    display:flex; align-items:center; gap:12px; text-align:left;
+    padding:10px 16px; border-radius:var(--radius-md); border:2px solid var(--line-strong);
+    background:var(--card-bg); max-width:420px; width:100%;
+  }
+  .event-card-icon{ width:44px; height:44px; flex:none; position:relative; }
+  .event-card-icon .icon-svg{ width:100%; height:100%; }
+  .event-card-text{ display:flex; flex-direction:column; gap:1px; min-width:0; }
+  .event-card-title{ font-family:var(--font-display); font-weight:800; font-size:1rem; }
+  .event-card-desc{ font-size:.85rem; color:var(--ink-soft); }
+  .no-effect-text{ font-family:var(--font-display); font-weight:800; font-size:.95rem; color:var(--danger-deep); }
+
+  /* Reference design: the board itself is four solid quadrant colors
+     (sun/wall on top, nutrient/water on bottom) filling the whole square.
+     The growable diamond area only ever reaches a bowtie/hourglass shape
+     from the seed to each edge (see renderBoardInto), so it never covers
+     the corners - the badges just sit there directly, on the quadrant's
+     own color, with no separate frame or padding needed. */
+  /* board-stage is the white frame (matches the reference art); board-inner
+     is the four-quadrant colored square inset within it, sized off its own
+     box so the cell grid math (in renderBoardInto) uses the inner area, not
+     the frame. */
+  .board-stage{
+    position:relative; margin:0 auto; aspect-ratio:1/1; width:100%; max-width:500px;
+    background:var(--card-bg); padding:3.2%; box-sizing:border-box;
+    border-radius:var(--radius-lg); border:2px solid var(--line-strong); box-shadow:var(--shadow);
+  }
+  .board-stage.wide{ max-width:736px; }
+  /* Both halves are flat single tones now - sky above, soil below - since
+     growth in either half is freeform (not tied to a left/right zone), a
+     split-color half would wrongly imply a zone that no longer exists.
+     Sunlight/water/nutrient/wall are all just scattered or fixed tokens on
+     individual cells instead (see renderBoardInto). */
+  .board-inner{
+    position:relative; width:100%; height:100%; border-radius:var(--radius-md); overflow:hidden;
+    background:linear-gradient(to bottom, var(--sky) 50%, var(--soil) 50%);
+  }
+  /* A finished board keeps a steady gold glow so "this one's done" reads at
+     a glance, not just during the one-off celebration animation. */
+  .board-stage.finished, .mini-stage.finished{
+    border-color:var(--sun-deep);
+    box-shadow:inset 0 0 0 1px var(--line), 0 0 0 4px var(--sun-deep), 0 0 22px 3px color-mix(in srgb, var(--sun) 65%, transparent);
+    animation: finished-glow 2.4s ease-in-out infinite;
+  }
+  @keyframes finished-glow{
+    0%,100%{ box-shadow:inset 0 0 0 1px var(--line), 0 0 0 4px var(--sun-deep), 0 0 18px 2px color-mix(in srgb, var(--sun) 55%, transparent); }
+    50%{ box-shadow:inset 0 0 0 1px var(--line), 0 0 0 4px var(--sun-deep), 0 0 28px 6px color-mix(in srgb, var(--sun) 75%, transparent); }
+  }
+  @media (prefers-reduced-motion: reduce){ .board-stage.finished, .mini-stage.finished{ animation:none; } }
+  .icon-svg{ width:1em; height:1em; display:block; }
+
+  /* Cells are individually rotated 45° and sized to their diagonal
+     neighbor's spacing so they tile edge-to-edge; only rendered within
+     |col| <= |row| (the bowtie the stem/root can actually reach), so the
+     quadrant color shows through everywhere else, including the corners. */
+  /* Soft shadow under the whole grown-area silhouette, so the cream diamond
+     region reads as raised above the colored quadrants (matches the
+     reference art) - filter follows each tile's actual shape, not a boxy
+     rectangle. */
+  .cell-layer{ position:absolute; inset:0; filter:drop-shadow(0 3px 5px rgba(20,15,10,.25)); }
+  .cell{
+    position:absolute; transform:translate(-50%,-50%) rotate(45deg);
+    box-sizing:border-box; border:1px solid var(--line-strong);
+    background:var(--panel-2);
+  }
+  /* Grown cells have no flat fill or border of their own - the connected
+     "vine" shape drawn inside (see connectionShapeSvg) supplies all the
+     visible color, so a run of same-type cells reads as one continuous
+     shape flowing across the grid instead of a checkerboard of separate
+     diamonds. */
+  .cell.seed, .cell.stem, .cell.root{ background:transparent; border:none; }
+  .cell.seed{ z-index:3; }
+  /* Raised brick look: the extra box-shadow offset is (h,v) with h==v
+     because .cell is already rotated 45deg - an equal-h/v local offset is
+     the one combination that lands as a straight-down shadow on screen
+     (see the cell's own rotate(45deg): local "right" maps to screen
+     down-right, local "down" maps to screen down-left, so h==v cancels the
+     sideways component and leaves only "down"). z-index lifts it above
+     neighboring cells so the shadow isn't clipped underneath them. */
+  .cell.wall{
+    background:var(--wall); z-index:2;
+    box-shadow:inset 0 0 0 2px var(--wall-deep), 4px 4px 6px rgba(20,10,5,.45);
+  }
+  /* Sits in the cell's own rotated frame (not counter-rotated) since the
+     arms are defined in terms of that frame's own 4 edges. */
+  .cell-vine{ position:absolute; inset:0; width:100%; height:100%; }
+  /* Resource tokens sit on top of an otherwise-empty cell and disappear
+     once grown into - so they reuse .cell.empty's own color and just add
+     an icon overlay. */
+  .cell-token{
+    position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+    transform:rotate(-45deg); pointer-events:none;
+  }
+  .cell-token .icon-svg{ width:60%; height:60%; }
+  /* Small permanent decoration on a stem cell that caught sunlight - sits
+     off to one side rather than dead-center on the vine, like a leaf
+     actually growing out from the side of the stem instead of a badge
+     stuck in the middle of it. */
+  .cell-leaf{
+    position:absolute; inset:0; display:flex; align-items:center; justify-content:flex-start;
+    padding-left:6%; transform:rotate(-45deg); pointer-events:none; z-index:2;
+  }
+  .cell-leaf .icon-svg{ width:68%; height:68%; }
+  /* Blooms on the winner's board on the results screen - bigger than a
+     normal cell-token since it's meant to stand out as the celebration
+     moment, not blend in as just another marker. */
+  .cell-flower{
+    position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+    transform:rotate(-45deg); pointer-events:none; z-index:2;
+  }
+  .cell-flower .icon-svg{ width:120%; height:120%; }
+
+  .cell.clickable{ cursor:pointer; }
+  .cell.hl-stem, .cell.hl-root, .cell.hl-danger{ z-index:4; animation: target-pulse 1.1s ease-in-out infinite; }
+  .cell.hl-stem{ background:color-mix(in srgb, var(--stem) 35%, var(--panel-2)); box-shadow:inset 0 0 0 3px var(--stem); }
+  .cell.hl-root{ background:color-mix(in srgb, var(--root) 35%, var(--panel-2)); box-shadow:inset 0 0 0 3px var(--root); }
+  .cell.hl-danger{ box-shadow:inset 0 0 0 3px var(--danger), 0 0 0 4px color-mix(in srgb, var(--danger) 30%, transparent); }
+  .cell.clickable:hover{ filter:brightness(1.12); }
+  .cell.clickable:focus-visible{ outline:3px solid var(--water); outline-offset:2px; z-index:5; }
+  @keyframes target-pulse{
+    0%,100%{ transform:translate(-50%,-50%) rotate(45deg) scale(1); opacity:.9; }
+    50%{ transform:translate(-50%,-50%) rotate(45deg) scale(1.18); opacity:1; }
+  }
+  .cell.shake{ animation:shake .4s ease; }
+  @keyframes shake{
+    10%,90%{ transform:translate(-50%,-50%) rotate(45deg) translateX(-3px); }
+    20%,80%{ transform:translate(-50%,-50%) rotate(45deg) translateX(4px); }
+    30%,50%,70%{ transform:translate(-50%,-50%) rotate(45deg) translateX(-5px); }
+    40%,60%{ transform:translate(-50%,-50%) rotate(45deg) translateX(5px); }
+  }
+  @media (prefers-reduced-motion: reduce){ .cell.hl-stem, .cell.hl-root, .cell.hl-danger, .cell.shake{ animation:none; } }
+
+  .celebrate{
+    position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+    font-size:2.6rem; pointer-events:none; opacity:0; z-index:5;
+  }
+  .celebrate.show{ animation:celebrate-pop .9s ease; }
+  @media (prefers-reduced-motion: reduce){ .celebrate.show{ animation:none; opacity:0; } }
+  @keyframes celebrate-pop{ 0%{ opacity:0; transform:scale(.4) rotate(-8deg);} 30%{ opacity:1; transform:scale(1.2) rotate(4deg);} 60%{ opacity:1; transform:scale(1) rotate(0);} 100%{ opacity:0; transform:scale(1.05); } }
+
+  .result-banner{
+    display:flex; flex-direction:column; gap:12px; align-items:center; background:var(--panel);
+    border-radius:var(--radius-lg); padding:18px 22px; font-weight:800; font-size:1.15rem; box-shadow:var(--shadow);
+    animation: reveal .3s ease; text-align:center;
+  }
+  @keyframes reveal{ from{ opacity:0; transform:translateY(6px);} to{opacity:1; transform:none;} }
+  @media (prefers-reduced-motion: reduce){ .result-banner{ animation:none; } }
+  .result-banner .primary-btn{ width:100%; max-width:220px; }
+
+  .end-game-row{ text-align:center; margin-top:10px; }
+
+  /* ---------- between-turn overview ---------- */
+  .overview-screen{ display:flex; flex-direction:column; align-items:center; gap:18px; padding:16px 0; text-align:center; }
+  .overview-screen h2{ font-size:1.3rem; font-weight:800; }
+  /* flex + justify-content:center (not CSS grid's fixed repeat(N,...))
+     because grid packs a short last row against the left edge instead of
+     centering it. .mini-stage below has a fixed 280px width, so instead of
+     computing a flex-basis percentage (which fought that fixed width and
+     made rows overlap), the container itself is just capped to fit exactly
+     2 of them per row - it wraps to 1-per-row on its own on a narrow
+     screen, no extra media query needed. */
+  .overview-grid{ display:flex; flex-wrap:wrap; justify-content:center; gap:26px; width:100%; max-width:586px; }
+  .overview-item{ display:flex; flex-direction:column; align-items:center; gap:12px; }
+  .mini-stage{
+    position:relative; width:280px; height:280px; background:var(--card-bg); padding:8px; box-sizing:border-box;
+    border:2px solid var(--line-strong); border-radius:var(--radius-md);
+  }
+  .mini-stage .board-inner{ border-radius:12px; }
+  /* Same group-chip/score-chip pattern as the growth screen, just scaled
+     down to fit a 280px-wide thumbnail. */
+  .mini-status-row{ max-width:280px; gap:10px; }
+  .mini-status-row .group-chip{
+    font-size:1.08rem; padding:10px 12px; gap:6px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+  }
+  .mini-status-row .score-chip{ padding:6px 12px; }
+  .mini-status-row .score-chip .score-num{ font-size:1.65rem; }
+  .mini-status-row .score-chip .score-label{ font-size:.68rem; }
+  /* Score comparison, ranked and re-drawn fresh every time this screen
+     shows - always reflects the turn that was just played. */
+  .score-board{ display:flex; flex-direction:column; gap:10px; width:100%; max-width:520px; }
+  .score-row{ display:flex; align-items:center; gap:10px; }
+  .score-row-name{
+    display:flex; align-items:center; gap:6px; font-weight:700; flex:0 0 128px;
+    text-align:left; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+  }
+  .score-bar{ flex:1; height:14px; background:var(--panel-2); border-radius:999px; overflow:hidden; }
+  .score-bar-fill{ display:block; height:100%; border-radius:999px; width:0; transition:width .6s cubic-bezier(.22,.9,.32,1); }
+  @media (prefers-reduced-motion: reduce){ .score-bar-fill{ transition:none; } }
+  .score-row-num{ flex:0 0 38px; text-align:right; font-weight:800; }
+
+  /* Popup for the draw reveal - a fixed overlay so the card always shows
+     centered in the viewport, never pushed off-screen below a tall board. */
+  .reveal-overlay{
+    display:none; position:fixed; inset:0; background:rgba(10,20,10,.5); backdrop-filter:blur(2px);
+    align-items:center; justify-content:center; padding:20px; z-index:22;
+  }
+  .reveal-overlay.active{ display:flex; }
+  .reveal-card{
+    background:var(--card-bg); border-radius:var(--radius-lg); padding:22px; max-width:340px; width:100%;
+    box-shadow:var(--shadow); display:flex; flex-direction:column; align-items:center; gap:14px;
+    border:2px solid var(--line-strong);
+  }
+
+  /* Same fixed-overlay pattern, used for the restart confirm prompt. */
+  .confirm-overlay{
+    display:none; position:fixed; inset:0; background:rgba(10,20,10,.5); backdrop-filter:blur(2px);
+    align-items:center; justify-content:center; padding:20px; z-index:30;
+  }
+  .confirm-overlay.active{ display:flex; }
+  .confirm-card{
+    background:var(--card-bg); border-radius:var(--radius-lg); padding:24px; max-width:320px; width:100%;
+    box-shadow:var(--shadow); display:flex; flex-direction:column; gap:16px; text-align:center;
+    border:2px solid var(--line-strong);
+  }
+  .confirm-text{ font-weight:700; }
+  .confirm-actions{ display:flex; gap:10px; justify-content:center; }
+  .confirm-actions .primary-btn{ padding:12px 22px; font-size:1rem; }
+
+  .rank-chip{
+    display:inline-flex; align-items:center; justify-content:center; flex:none;
+    width:1.8em; height:1.8em; border-radius:50%; font-family:var(--font-mono); font-weight:800; font-size:1rem;
+  }
+
+  /* ---------- final results ---------- */
+  /* A warm gold-tinted band (not just the plain page background) plus
+     bigger circular rank badges above each board - deliberately reads as
+     an "awards ceremony" moment, distinct from the plain between-round
+     overview screen even though both show a row of mini boards. */
+  .results-screen{
+    display:flex; flex-direction:column; align-items:center; gap:18px; text-align:center;
+    width:100vw; margin-left:calc(50% - 50vw); margin-right:calc(50% - 50vw);
+    padding:28px 20px 40px; background:linear-gradient(180deg, color-mix(in srgb, var(--sun) 16%, transparent), transparent 260px);
+  }
+  .results-icon{ width:60px; height:60px; }
+  .results-icon .icon-svg{ width:100%; height:100%; }
+  .results-screen h2{ font-size:1.8rem; font-weight:800; }
+  /* Left-to-right, 1st place first - flex-start (not centered/wrapped
+     evenly) keeps that reading order clear even when it wraps to a second
+     row on a narrow screen. */
+  .results-grid{
+    display:flex; flex-wrap:wrap; justify-content:center; align-items:flex-start; gap:24px;
+    width:100%; max-width:1160px;
+  }
+  .result-item{ display:flex; flex-direction:column; align-items:center; gap:10px; }
+  .result-rank-badge{
+    width:48px; height:48px; border-radius:50%; display:flex; align-items:center; justify-content:center;
+    font-family:var(--font-mono); font-weight:800; font-size:1.4rem; color:#fff; box-shadow:var(--shadow);
+    border:3px solid var(--card-bg);
+  }
+  .result-item.tier-1 .mini-stage{
+    border-color:var(--sun-deep);
+    box-shadow:0 0 0 4px color-mix(in srgb, var(--sun) 55%, transparent), var(--shadow);
+  }
+  .result-item.tier-2 .mini-stage{ border-color:#B9C0C7; }
+  .result-item.tier-3 .mini-stage{ border-color:#C98A4E; }
+</style>
+
+<div class="app">
+  <div class="masthead">
+    <h1>Growth Challenge</h1>
+  </div>
+
+  <!-- ===== 1. setup ===== -->
+  <div class="setup-card" id="setupCard">
+    <div class="field-row">
+      <label>Game Mode</label>
+      <div class="mode-toggle" id="modeToggle">
+        <button type="button" class="mode-option selected" data-mode="easy">
+          <span class="mode-title">Easy</span>
+          <span class="mode-sub">Game with no points taken away</span>
+        </button>
+        <button type="button" class="mode-option" data-mode="hard">
+          <span class="mode-title">Hard</span>
+          <span class="mode-sub">Game with points taken away</span>
+        </button>
+      </div>
+    </div>
+    <div class="field-row">
+      <label for="groupCount">Number of Groups</label>
+      <input type="number" id="groupCount" min="2" max="8" value="4">
+    </div>
+    <div id="groupNames" class="group-name-grid"></div>
+    <div class="field-row">
+      <label for="radius">Board Size: <span id="radiusVal" class="mono">6</span></label>
+      <input type="range" id="radius" min="3" max="9" value="6">
+      <div class="radius-hint">Bigger number, longer game</div>
+    </div>
+    <div class="field-row">
+      <label for="rounds">Rounds per Group: <span id="roundsVal" class="mono">16</span></label>
+      <input type="range" id="rounds" min="6" max="30" value="16">
+      <div class="radius-hint">How many times each group draws before the game ends</div>
+    </div>
+    <div>
+      <button class="primary-btn" id="startBtn">Next</button>
+    </div>
+  </div>
+
+  <!-- ===== 2. ready screen ===== -->
+  <div class="ready-screen" id="readyScreen" hidden>
+    <h2>Ready?</h2>
+    <div class="ready-list" id="readyList"></div>
+    <button class="primary-btn" id="goBtn">Start Game</button>
+  </div>
+
+  <!-- ===== 2b. interactive tutorial: play a practice plant one guided tap at a time ===== -->
+  <div class="tutorial-screen" id="tutorialScreen" hidden>
+    <h2>How to Play</h2>
+    <button class="ghost-btn" id="tutorialSkipBtn">Skip Tutorial →</button>
+    <div class="status-row">
+      <div class="group-chip">Practice</div>
+      <div class="score-chip"><span class="score-num" id="tutorialScoreNum">0</span><span class="score-label">points</span></div>
+    </div>
+    <div class="tutorial-instruction" id="tutorialInstruction"></div>
+    <div class="board-stage" id="tutorialBoardStage">
+      <div class="board-inner"><div id="tutorialCellLayer" class="cell-layer"></div></div>
+    </div>
+    <div id="tutorialResultSlot"></div>
+    <div class="tutorial-goal" id="tutorialGoal" hidden>Highest total score wins!</div>
+    <button class="primary-btn" id="tutorialContinueBtn" hidden>Start Playing →</button>
+  </div>
+
+  <!-- ===== 3. turn intro ===== -->
+  <div class="turn-intro" id="turnIntro" hidden>
+    <div class="name" id="introName"></div>
+    <div class="round mono" id="introRound"></div>
+    <button class="primary-btn" id="drawBtn">Draw</button>
+  </div>
+
+  <!-- ===== 4. draw reveal (growth choice or setback - same screen either way) ===== -->
+  <!-- The board stays inline (still part of .app, same as growthScreen), but
+       the reveal card itself is a fixed popup (#revealOverlay below) so it's
+       always centered in the viewport - never pushed below the fold by a
+       tall board on a short screen. -->
+  <div class="choice-screen" id="choiceOverlay" hidden>
+    <div class="choice-layout">
+      <div class="choice-status">
+        <div class="board-stage wide" id="choiceBoardStage">
+          <div class="board-inner"><div id="choiceCellLayer" class="cell-layer"></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== 5. growth screen ===== -->
+  <!-- Top to bottom: masthead (above), group/score, current action, board,
+       result/end-game - the board is a fixed step in that order now rather
+       than sharing a row with the side info, so it never crowds the status
+       above it. -->
+  <div class="growth-screen" id="growthScreen" hidden>
+    <div class="status-row">
+      <div class="group-chip" id="growthGroupChip"></div>
+      <div class="score-chip"><span class="score-num" id="growthScoreNum">0</span><span class="score-label">points</span></div>
+    </div>
+    <div class="growth-instruction" id="growthInstruction"></div>
+    <div class="board-stage wide" id="boardStage">
+      <div class="board-inner">
+        <div id="cellLayer" class="cell-layer"></div>
+        <div class="celebrate" id="celebrateLayer">
+          <svg class="icon-svg" viewBox="0 0 100 100" aria-hidden="true">
+            <path d="M50 2L59.9 40.1L98 50L59.9 59.9L50 98L40.1 59.9L2 50L40.1 40.1Z" fill="#F0B93E"/>
+            <circle cx="80" cy="20" r="6" fill="#F5C452"/>
+            <circle cx="18" cy="78" r="4.5" fill="#F5C452"/>
+          </svg>
+        </div>
+      </div>
+    </div>
+    <div id="resultSlot"></div>
+    <div class="end-game-row"><button class="ghost-btn" id="endGameBtn">End Game</button></div>
+  </div>
+
+  <!-- ===== 6. between-turn overview ===== -->
+  <div class="overview-screen" id="overviewScreen" hidden>
+    <h2>Growth So Far</h2>
+    <div class="overview-grid" id="overviewGrid"></div>
+    <div class="score-board" id="scoreBoard"></div>
+    <button class="primary-btn" id="overviewContinueBtn">Continue →</button>
+  </div>
+
+  <!-- ===== 7. final results - deliberately not styled like the overview
+       screen above, so it reads as a distinct "the game is over" moment
+       rather than just another between-round check-in. ===== -->
+  <div class="results-screen" id="resultsScreen" hidden>
+    <div class="results-icon">
+      <svg class="icon-svg" viewBox="0 0 100 100" aria-hidden="true">
+        <path d="M30 10H70V38C70 54 58 64 50 64C42 64 30 54 30 38V10Z" fill="#F0B93E"/>
+        <path d="M30 16C20 16 14 22 14 30C14 38 20 44 28 45" fill="none" stroke="#E29A0E" stroke-width="6" stroke-linecap="round"/>
+        <path d="M70 16C80 16 86 22 86 30C86 38 80 44 72 45" fill="none" stroke="#E29A0E" stroke-width="6" stroke-linecap="round"/>
+        <rect x="44" y="64" width="12" height="16" fill="#E29A0E"/>
+        <rect x="30" y="80" width="40" height="10" rx="4" fill="#F0B93E"/>
+      </svg>
+    </div>
+    <h2>Final Results</h2>
+    <div class="results-grid" id="resultsGrid"></div>
+    <button class="primary-btn" id="restartBtn">Play Again</button>
+  </div>
+</div>
+
+<!-- Fixed popup for the draw reveal card - sits outside .app so it's always
+     centered in the viewport no matter how tall the board above it is. -->
+<div class="reveal-overlay" id="revealOverlay">
+  <div class="reveal-card">
+    <div class="status-row">
+      <div class="group-chip" id="choiceGroupChip"></div>
+      <div class="score-chip"><span class="score-num" id="choiceScoreNum">0</span><span class="score-label">points</span></div>
+    </div>
+    <div class="side-title">This Turn's Event</div>
+    <div class="choice-options" id="choiceOptions"></div>
+    <button class="primary-btn" id="revealContinueBtn" hidden>Continue →</button>
+  </div>
+</div>
+
+<!-- Sits outside .app so it stays fixed in place and visible no matter which
+     screen inside .app is currently shown. -->
+<button class="restart-fab" id="restartFab" type="button" title="Restart game">
+  <svg class="icon-svg" viewBox="0 0 100 100" aria-hidden="true">
+    <path d="M50 18A32 32 0 1 1 21 37" fill="none" stroke="currentColor" stroke-width="9" stroke-linecap="round"/>
+    <path d="M50 2L50 24L30 16Z" fill="currentColor"/>
+  </svg>
+  <span>Restart</span>
+</button>
+
+<!-- Custom confirm dialog - native window.confirm() is blocked in this
+     sandboxed context (Artifacts run inside a sandboxed iframe without
+     allow-modals), so it would otherwise silently do nothing. -->
+<div class="confirm-overlay" id="confirmOverlay">
+  <div class="confirm-card">
+    <div class="confirm-text">Restart the game? All current progress will be lost.</div>
+    <div class="confirm-actions">
+      <button class="ghost-btn" id="confirmCancelBtn">Cancel</button>
+      <button class="primary-btn" id="confirmRestartBtn">Restart</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  var GROUP_COLORS = ['#5B7FBA','#D1548C','#E08A2E','#2E9E6B','#B08C2E','#2FA8E0','#9B5FC9','#6BA23E'];
+
+  // ---------- sound effects ----------
+  // Small procedural blips/chimes via Web Audio - no audio files to embed,
+  // and the context only gets created on first use (most browsers refuse
+  // to start one before a user gesture anyway).
+  var audioCtx = null;
+  function getAudioCtx(){
+    if(!audioCtx){
+      var Ctx = window.AudioContext || window.webkitAudioContext;
+      if(Ctx){ try{ audioCtx = new Ctx(); }catch(e){} }
+    }
+    return audioCtx;
+  }
+  function playChime(freqs, noteDur, type){
+    var ctx = getAudioCtx();
+    if(!ctx) return;
+    if(ctx.state === 'suspended') ctx.resume();
+    freqs.forEach(function(f, i){
+      var t = ctx.currentTime + i * noteDur;
+      var osc = ctx.createOscillator();
+      var gain = ctx.createGain();
+      osc.type = type || 'sine';
+      osc.frequency.value = f;
+      gain.gain.setValueAtTime(0, t);
+      gain.gain.linearRampToValueAtTime(.16, t + .01);
+      gain.gain.exponentialRampToValueAtTime(.001, t + noteDur * .9);
+      osc.connect(gain); gain.connect(ctx.destination);
+      osc.start(t); osc.stop(t + noteDur);
+    });
+  }
+  function sfxTick(){ playChime([760], .05, 'square'); }
+  function sfxLand(){ playChime([660, 1020], .12, 'triangle'); }
+  function sfxScoreUp(){ playChime([523.25, 659.25, 783.99], .09, 'sine'); }
+  function sfxResults(){ playChime([523.25, 659.25, 783.99, 1046.5], .16, 'triangle'); }
+  function sfxDenied(){ playChime([220, 165], .14, 'sawtooth'); }
+  // Distinct from sfxDenied (a blocked/invalid click) - this is a legal
+  // action that actually happened, just a bad one: a descending triangle
+  // motif, the mirror of sfxScoreUp's ascending one.
+  function sfxSetback(){ playChime([523.25, 415.30, 349.23], .11, 'triangle'); }
+
+  // Cells sit on a diagonal lattice in plain (unrotated) screen coordinates -
+  // col,row map straight to pixel x,y - so a diagonal growth direction moves
+  // both col and row by one step at once. Both stem and root can grow in
+  // any of the 4 diagonals now, including back toward the seed's row - a
+  // wall blocking one route is never a true dead end, the player can grow
+  // around it instead. Stem still can't cross row 0 into root's half (or
+  // vice versa) since that single crossing cell is always the seed, which
+  // is already occupied - see computeGrowthTargets's bowtie check.
+  var BRANCHES = {
+    stem: { part:'stem', deltas:[{dc:-1,dr:-1},{dc:1,dr:-1},{dc:-1,dr:1},{dc:1,dr:1}] },
+    root: { part:'root', deltas:[{dc:-1,dr:1},{dc:1,dr:1},{dc:-1,dr:-1},{dc:1,dr:-1}] }
+  };
+
+  // Flat two-tone icons matching the reference art (sun/water/wall/nutrient
+  // sack), reused everywhere an outcome or corner badge needs that resource's
+  // glyph instead of a generic emoji.
+  var ICON_SUN =
+    '<svg class="icon-svg" viewBox="0 0 100 100" aria-hidden="true">' +
+      '<g stroke="#E8C468" stroke-width="7" stroke-linecap="round">' +
+        '<line x1="50" y1="3" x2="50" y2="17"/>' +
+        '<line x1="50" y1="3" x2="50" y2="17" transform="rotate(45 50 50)"/>' +
+        '<line x1="50" y1="3" x2="50" y2="17" transform="rotate(90 50 50)"/>' +
+        '<line x1="50" y1="3" x2="50" y2="17" transform="rotate(135 50 50)"/>' +
+        '<line x1="50" y1="3" x2="50" y2="17" transform="rotate(180 50 50)"/>' +
+        '<line x1="50" y1="3" x2="50" y2="17" transform="rotate(225 50 50)"/>' +
+        '<line x1="50" y1="3" x2="50" y2="17" transform="rotate(270 50 50)"/>' +
+        '<line x1="50" y1="3" x2="50" y2="17" transform="rotate(315 50 50)"/>' +
+      '</g>' +
+      '<circle cx="50" cy="50" r="24" fill="#E8C468"/>' +
+    '</svg>';
+  // Matches the reference wall art: a diagonal rounded plank plus two small
+  // diamonds (squares rotated 45°, same language as the board's own cells).
+  var ICON_WALL =
+    '<svg class="icon-svg" viewBox="0 0 100 100" aria-hidden="true">' +
+      '<rect x="17" y="3" width="30" height="62" rx="9" fill="#C17A52" transform="rotate(45 32 34)"/>' +
+      '<rect x="24" y="58" width="28" height="28" rx="6" fill="#C17A52" transform="rotate(45 38 72)"/>' +
+      '<rect x="58" y="44" width="28" height="28" rx="6" fill="#8B4A3A" transform="rotate(45 72 58)"/>' +
+    '</svg>';
+  var ICON_NUTRIENT =
+    '<svg class="icon-svg" viewBox="0 0 100 100" aria-hidden="true">' +
+      '<path d="M50 8C34 8 26 16 26 24C12 34 6 54 10 68C14 84 30 94 50 94C70 94 86 84 90 68C94 54 88 34 74 24C74 16 66 8 50 8Z" fill="#6FA84E"/>' +
+      '<path d="M40 44C52 44 64 54 64 74C52 74 40 64 40 44Z" fill="#FFFFFF"/>' +
+    '</svg>';
+  var ICON_WATER =
+    '<svg class="icon-svg" viewBox="0 0 100 100" aria-hidden="true">' +
+      '<path d="M50 4C50 4 84 48 84 62A34 34 0 1 1 16 62C16 48 50 4 50 4Z" fill="#5B9BD5" style="clip-path:inset(0 50% 0 0)"/>' +
+      '<path d="M50 4C50 4 84 48 84 62A34 34 0 1 1 16 62C16 48 50 4 50 4Z" fill="#3D7DB0" style="clip-path:inset(0 0 0 50%)"/>' +
+    '</svg>';
+  // Marks the seed's own cell on the board (not an outcome card icon).
+  var ICON_SEED =
+    '<svg class="icon-svg" viewBox="0 0 100 100" aria-hidden="true">' +
+      '<path d="M50 6C34 6 20 22 20 46C20 74 34 94 50 94C66 94 80 74 80 46C80 22 66 6 50 6Z" fill="#E0B3A0"/>' +
+      '<path d="M50 6C50 6 62 24 62 46C62 72 56 94 50 94Z" fill="#C88F78"/>' +
+      '<ellipse cx="47" cy="28" rx="6" ry="8" fill="#A9735C" opacity=".55"/>' +
+    '</svg>';
+  // Small mark for a stem cell that caught sunlight - not an outcome card
+  // icon, just a permanent decoration overlaid on that one cell. A simple
+  // pointed-oval leaf silhouette, matching the reference art.
+  var ICON_LEAF =
+    '<svg class="icon-svg" viewBox="0 0 100 100" aria-hidden="true">' +
+      '<path d="M6 50Q50 12 94 50Q50 88 6 50Z" fill="var(--stem-deep)"/>' +
+    '</svg>';
+  // Blooms at the top of the winning group's stem on the results screen -
+  // 4 overlapping petals around a golden center, matching the reference.
+  var ICON_FLOWER =
+    '<svg class="icon-svg" viewBox="0 0 100 100" aria-hidden="true">' +
+      '<circle cx="50" cy="27" r="26" fill="#EDB2BB"/>' +
+      '<circle cx="73" cy="50" r="26" fill="#EDB2BB"/>' +
+      '<circle cx="50" cy="73" r="26" fill="#EDB2BB"/>' +
+      '<circle cx="27" cy="50" r="26" fill="#EDB2BB"/>' +
+      '<circle cx="50" cy="50" r="24" fill="#B8924A"/>' +
+    '</svg>';
+  // A "no entry" mark for events that landed but couldn't do anything.
+  var ICON_BLOCKED =
+    '<svg class="icon-svg" viewBox="0 0 100 100" aria-hidden="true">' +
+      '<circle cx="50" cy="50" r="38" fill="none" stroke="#C36255" stroke-width="9"/>' +
+      '<line x1="24" y1="24" x2="76" y2="76" stroke="#C36255" stroke-width="9" stroke-linecap="round"/>' +
+    '</svg>';
+  // Generic upward-growth glyph (the stem draw card) - distinct from the
+  // sun/wall icons, which now mark tokens scattered on the board itself
+  // rather than the outcome card.
+  var ICON_STEM_GROW =
+    '<svg class="icon-svg" viewBox="0 0 100 100" aria-hidden="true">' +
+      '<path d="M50 94L50 58" stroke="#2F8A4C" stroke-width="8" stroke-linecap="round" fill="none"/>' +
+      '<path d="M50 58C50 58 26 52 20 28" stroke="#8CC63F" stroke-width="7" stroke-linecap="round" fill="none"/>' +
+      '<path d="M50 58C50 58 74 52 80 28" stroke="#8CC63F" stroke-width="7" stroke-linecap="round" fill="none"/>' +
+      '<path d="M50 58C50 58 54 36 50 8" stroke="#8CC63F" stroke-width="7" stroke-linecap="round" fill="none"/>' +
+    '</svg>';
+  // Generic downward-growth glyph (gravitropism) - distinct from the water/
+  // nutrient icons, which now mark pickup tokens scattered on the board
+  // rather than the outcome card itself.
+  var ICON_ROOT =
+    '<svg class="icon-svg" viewBox="0 0 100 100" aria-hidden="true">' +
+      '<path d="M50 6L50 42" stroke="#8C6A2C" stroke-width="8" stroke-linecap="round" fill="none"/>' +
+      '<path d="M50 42C50 42 30 48 24 70" stroke="#B58A3D" stroke-width="7" stroke-linecap="round" fill="none"/>' +
+      '<path d="M50 42C50 42 70 50 78 68" stroke="#B58A3D" stroke-width="7" stroke-linecap="round" fill="none"/>' +
+      '<path d="M50 42C50 42 46 64 50 92" stroke="#B58A3D" stroke-width="7" stroke-linecap="round" fill="none"/>' +
+    '</svg>';
+  var ICON_PRUNE =
+    '<svg class="icon-svg" viewBox="0 0 100 100" aria-hidden="true">' +
+      '<g stroke="#7A828C" stroke-width="9" stroke-linecap="round" fill="none">' +
+        '<line x1="10" y1="12" x2="72" y2="74"/>' +
+        '<line x1="90" y1="12" x2="28" y2="74"/>' +
+      '</g>' +
+      '<circle cx="19" cy="82" r="16" fill="none" stroke="#5B636C" stroke-width="10"/>' +
+      '<circle cx="81" cy="82" r="16" fill="none" stroke="#5B636C" stroke-width="10"/>' +
+      '<circle cx="50" cy="50" r="7" fill="#E5897C"/>' +
+    '</svg>';
+  var ICON_ROT =
+    '<svg class="icon-svg" viewBox="0 0 100 100" aria-hidden="true">' +
+      '<g stroke="#8B6F47" stroke-width="8" stroke-linecap="round" fill="none">' +
+        '<path d="M50 4L50 38"/>' +
+        '<path d="M50 38L16 78"/>' +
+        '<path d="M50 38L84 82"/>' +
+        '<path d="M50 38L50 96"/>' +
+        '<path d="M32 58L12 56"/>' +
+        '<path d="M68 64L90 68"/>' +
+      '</g>' +
+      '<circle cx="16" cy="78" r="7" fill="#5A4830" opacity=".8"/>' +
+      '<circle cx="84" cy="82" r="8" fill="#5A4830" opacity=".8"/>' +
+      '<circle cx="50" cy="96" r="6" fill="#5A4830" opacity=".8"/>' +
+      '<circle cx="12" cy="56" r="5" fill="#5A4830" opacity=".8"/>' +
+      '<circle cx="90" cy="68" r="5" fill="#5A4830" opacity=".8"/>' +
+    '</svg>';
+
+  var OUTCOMES = [
+    { id:'stem', kind:'growth', branch:'stem', steps:1, icon:ICON_STEM_GROW, title:'Grow Stem', desc:'Pick where your stem grows.' },
+    { id:'root', kind:'growth', branch:'root', steps:1, icon:ICON_ROOT, title:'Grow Roots', desc:'Pick where your roots grow.' },
+    { id:'prune', kind:'damage', part:'stem', steps:-1, icon:ICON_PRUNE, title:'Pruned!', desc:'Oh no, the stem got cut!' },
+    { id:'rot', kind:'damage', part:'root', steps:-1, icon:ICON_ROT, title:'Root Rot', desc:'Oh no, the root is rotting!' },
+    { id:'bonus_stem', kind:'growth', branch:'stem', steps:2, icon:ICON_STEM_GROW, title:'Strong Growth', desc:'Pick 2 cells to grow into!' },
+    { id:'bonus_root', kind:'growth', branch:'root', steps:2, icon:ICON_ROOT, title:'Deep Roots', desc:'Pick 2 cells to grow into!' }
+  ];
+  var GROWTH_OUTCOMES = OUTCOMES.filter(function(o){ return o.kind === 'growth'; });
+  var SETBACK_OUTCOMES = OUTCOMES.filter(function(o){ return o.kind === 'damage'; });
+  var SETBACK_CHANCE = 0.25; // share of every group's own draws that are a setback
+
+  // Every group gets its own shuffled deck of exactly maxRounds slots, with
+  // the same setback:growth ratio - so every group experiences the same
+  // number of setbacks over the game (just in a different random order),
+  // rather than each draw being an independent coin flip that could
+  // unluckily stack up on one group and not another.
+  function buildDrawDeck(maxRounds, allowSetbacks){
+    var setbackCount = allowSetbacks ? Math.round(maxRounds * SETBACK_CHANCE) : 0;
+    var deck = [];
+    for(var i=0;i<maxRounds;i++) deck.push(i < setbackCount ? 'damage' : 'growth');
+    return shuffle(deck);
+  }
+
+  var state = null;
+
+  function el(id){ return document.getElementById(id); }
+  function clamp(v,min,max){ return Math.max(min, Math.min(max, v)); }
+  function key(col,row){ return col + ',' + row; }
+
+  // ---------- connected-vine cell rendering ----------
+  // Autotile-style shape system: instead of filling a cell's whole diamond
+  // with flat color, draw a rounded "arm" toward each diagonal neighbor
+  // that's actually the same growing part (or the seed), so a run of
+  // stem/root cells reads as one continuous vine instead of a checkerboard
+  // of separate blocks. Order matches how a cell's own 45°-rotated square
+  // maps onto its 4 screen-diagonal neighbors: the square's own top/right/
+  // bottom/left edges end up facing screen up-right/down-right/down-left/
+  // up-left once .cell's rotate(45deg) is applied - so "up-left neighbor"
+  // corresponds to the SVG's own left edge, and so on around clockwise.
+  var CONN_DELTAS = [ // [up-left, up-right, down-right, down-left]
+    {dc:-1,dr:-1}, {dc:1,dr:-1}, {dc:1,dr:1}, {dc:-1,dr:1}
+  ];
+  // Growth is free to create a cell that's diagonally adjacent to 2+
+  // existing cells (a real structural loop, now that stem/root can grow in
+  // any of the 4 directions) - but the drawing itself should still read as
+  // a single branching plant, not a closed ring. So rendering doesn't use
+  // raw adjacency: it walks a BFS spanning tree from the seed once per
+  // render and only draws the edges that tree actually used, silently
+  // dropping whichever extra adjacency would have closed a loop.
+  function buildSpanningParents(group){
+    var parent = {};
+    var seedKey = key(0,0);
+    var visited = {}; visited[seedKey] = true;
+    var queue = [seedKey];
+    while(queue.length){
+      var cur = queue.shift();
+      var p = cur.split(','), c = +p[0], r = +p[1];
+      CONN_DELTAS.forEach(function(d){
+        var nk = key(c+d.dc, r+d.dr);
+        if(visited[nk] || !group.cells[nk]) return;
+        visited[nk] = true;
+        parent[nk] = cur;
+        queue.push(nk);
+      });
+    }
+    return parent;
+  }
+  function treeConnections(parent, col, row){
+    var myKey = key(col,row);
+    return CONN_DELTAS.map(function(d){
+      var nk = key(col+d.dc, row+d.dr);
+      return parent[nk] === myKey || parent[myKey] === nk;
+    });
+  }
+  // One rounded "arm" rect per direction, each reaching from that edge to
+  // just past center so 2+ arms overlap and merge into a single shape
+  // (rx = half the arm's thickness gives a clean rounded cap on both ends,
+  // no separate arc path needed). Index order matches CONN_DELTAS.
+  var CONN_ARMS = [
+    '<rect x="0" y="35" width="58" height="30" rx="15"/>',   // toward up-left edge (SVG left)
+    '<rect x="35" y="0" width="30" height="58" rx="15"/>',   // toward up-right edge (SVG top)
+    '<rect x="42" y="35" width="58" height="30" rx="15"/>',  // toward down-right edge (SVG right)
+    '<rect x="35" y="42" width="30" height="58" rx="15"/>'   // toward down-left edge (SVG bottom)
+  ];
+  // Not counter-rotated like .cell-token icons - this is meant to sit in
+  // the cell's own rotated frame, since the arms are defined in terms of
+  // that frame's own edges.
+  function connectionShapeSvg(conn, fillVar){
+    var count = 0, arms = '';
+    conn.forEach(function(on, i){ if(on){ count++; arms += CONN_ARMS[i]; } });
+    if(count === 0) return '';
+    var hub = count >= 2 ? '<circle cx="50" cy="50" r="17"/>' : '';
+    return '<svg class="cell-vine" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">' +
+      '<g fill="'+fillVar+'">' + arms + hub + '</g>' +
+    '</svg>';
+  }
+  function rankBadgeHtml(rank){
+    var bg = rank===1 ? 'var(--sun-deep)' : rank===2 ? '#B9C0C7' : rank===3 ? '#C98A4E' : 'var(--panel-2)';
+    var fg = rank<=3 ? '#fff' : 'var(--ink)';
+    return '<span class="rank-chip" style="background:'+bg+';color:'+fg+';">'+rank+'</span>';
+  }
+  function show(node){ node.hidden = false; }
+  function hide(node){ node.hidden = true; }
+
+  // ---------- map generation (tokens, once per group) ----------
+  // Every token type (water, nutrient, wall, sunlight) gets the same count,
+  // scaled to board size, so none of them visually dominates the board.
+  function tokenCountFor(R){ return Math.max(2, Math.round(R * 0.9)); }
+
+  function lowerHalfCells(R){
+    var cells = [];
+    for(var row=1; row<=R; row++){
+      for(var col=-row; col<=row; col+=2) cells.push(key(col,row));
+    }
+    return cells;
+  }
+  function upperHalfCells(R){
+    var cells = [];
+    for(var row=-R; row<=-1; row++){
+      var maxCol = Math.abs(row);
+      for(var col=-maxCol; col<=maxCol; col+=2) cells.push(key(col,row));
+    }
+    return cells;
+  }
+  function shuffle(arr){
+    for(var i=arr.length-1; i>0; i--){
+      var j = Math.floor(Math.random()*(i+1));
+      var tmp = arr[i]; arr[i]=arr[j]; arr[j]=tmp;
+    }
+    return arr;
+  }
+  function generateResources(R){
+    var count = tokenCountFor(R);
+    var pool = shuffle(lowerHalfCells(R));
+    var out = {};
+    for(var i=0; i<pool.length && i<count; i++) out[pool[i]] = 'water';
+    for(var i=count; i<pool.length && i<count*2; i++) out[pool[i]] = 'nutrient';
+    return out;
+  }
+  // True if every non-wall cell in the upper half can still be reached from
+  // the seed through a chain of non-wall cells (any of the 4 diagonals,
+  // same as how stem actually grows) - i.e. this wall layout never strands
+  // a cell behind an unbreakable wall of walls.
+  function upperHalfFullyReachable(R, walls){
+    var open = upperHalfCells(R).filter(function(k){ return !walls[k]; });
+    var openSet = {};
+    open.forEach(function(k){ openSet[k] = true; });
+    var deltas = [{dc:-1,dr:-1},{dc:1,dr:-1},{dc:-1,dr:1},{dc:1,dr:1}];
+    var visited = {}, stack = [key(0,0)];
+    visited[key(0,0)] = true;
+    while(stack.length){
+      var cur = stack.pop();
+      var p = cur.split(','), c = +p[0], r = +p[1];
+      deltas.forEach(function(d){
+        var nc = c+d.dc, nr = r+d.dr;
+        if(nr >= 0) return; // stays in the upper/stem half
+        if(Math.max(Math.abs(nc),Math.abs(nr)) > R) return;
+        if(Math.abs(nc) > Math.abs(nr)) return; // bowtie shape
+        var nk = key(nc,nr);
+        if(visited[nk] || !openSet[nk]) return;
+        visited[nk] = true;
+        stack.push(nk);
+      });
+    }
+    return open.every(function(k){ return visited[k]; });
+  }
+  // Walls are permanent (never consumed like a resource) - a stem cell that
+  // grows next to one triggers the once-per-turn bonus in onCellClick, and
+  // the same wall can trigger it again on a later turn. Generated before
+  // sunlight, since sunlight's shadows depend on where the walls land.
+  // Added one at a time, skipping any candidate that would strand a cell -
+  // a wall can slow growth down or force a detour, but can never fully
+  // block a position off from ever being grown into.
+  function generateWalls(R){
+    var count = tokenCountFor(R);
+    var pool = shuffle(upperHalfCells(R));
+    var out = {};
+    var placed = 0;
+    for(var i=0; i<pool.length && placed<count; i++){
+      var candidate = pool[i];
+      out[candidate] = true;
+      if(upperHalfFullyReachable(R, out)) placed++;
+      else delete out[candidate];
+    }
+    return out;
+  }
+  // Sunlight comes from the top-left at the same 45° the board's own cells
+  // sit on, so a candidate only catches light if nothing blocks the
+  // straight line back to the board's edge along that diagonal - a wall
+  // casts a real shadow on whatever's directly behind it (toward the seed).
+  // Split into "find the eligible cells" and "place a fixed number of
+  // tokens into them" so setup can look at every group's candidate pool
+  // first and give them all the same sunlight count (see el('startBtn') -
+  // unlike walls/water/nutrient, which always place a fixed count, a wall
+  // layout can shadow away some sunlight candidates, so left alone this is
+  // the one resource whose count could otherwise differ group to group).
+  function sunlightCandidates(R, walls){
+    return upperHalfCells(R).filter(function(k){
+      var p = k.split(','), col = +p[0], row = +p[1];
+      if(col >= 0 || walls[k]) return false;
+      var c = col, r = row;
+      while(true){
+        c -= 1; r -= 1;
+        if(Math.max(Math.abs(c),Math.abs(r)) > R) break; // reached the board's edge - clear path
+        if(walls[key(c,r)]) return false; // a wall sits between here and the light
+      }
+      return true;
+    });
+  }
+  function placeSunlight(candidates, count){
+    var pool = shuffle(candidates.slice());
+    var out = {};
+    for(var i=0; i<pool.length && i<count; i++) out[pool[i]] = 'sunlight';
+    return out;
+  }
+
+  // Score = cells actually grown (seed doesn't count) + collected resource
+  // points - a fully-grown plant has necessarily passed through every
+  // reachable resource cell, so this single number already captures both.
+  function totalScore(group){
+    return (Object.keys(group.cells).length - 1) + group.score;
+  }
+  // Score changes animate with a quick count-up (skipped under reduced
+  // motion) so a scoring moment actually reads as a moment, not just a
+  // number silently changing. (The sound effect for an actual gain is
+  // triggered separately, at the specific spots in onCellClick where a
+  // group's own score just went up - these chips get reused across
+  // different groups' turns, so comparing "old displayed number" to "new
+  // number" here isn't a reliable way to tell a genuine gain apart from
+  // just switching to a different group's already-existing score.)
+  function animateScoreNum(el, newValue){
+    var from = parseInt(el.textContent, 10);
+    if(isNaN(from) || REDUCE_MOTION){ el.textContent = newValue; return; }
+    if(from === newValue) return;
+    var start = null, duration = 550;
+    function step(ts){
+      if(start === null) start = ts;
+      var t = Math.min(1, (ts - start) / duration);
+      var eased = 1 - Math.pow(1 - t, 3);
+      el.textContent = t < 1 ? Math.round(from + (newValue - from) * eased) : newValue;
+      if(t < 1) requestAnimationFrame(step);
+    }
+    requestAnimationFrame(step);
+  }
+  // Same idea for the score-board bars - start at 0% and transition to the
+  // real width, rather than just appearing at full length. Needs a double
+  // rAF: the browser has to actually paint the 0% state before changing it
+  // is treated as a transition instead of the initial value. delay staggers
+  // each row's chime a little so a whole board of bars animating together
+  // reads as a little rolling cascade instead of one chord all at once.
+  function animateBarWidth(el, pct, delay){
+    if(REDUCE_MOTION){ el.style.width = pct + '%'; return; }
+    setTimeout(function(){
+      requestAnimationFrame(function(){
+        requestAnimationFrame(function(){ el.style.width = pct + '%'; });
+      });
+      sfxScoreUp();
+    }, delay || 0);
+  }
+  // Group name and score always show as two separate chips (not one
+  // combined pill) - same pattern on the reveal card, the growth screen,
+  // and each overview thumbnail.
+  function setStatusChips(groupEl, scoreEl, group){
+    groupEl.textContent = group.name;
+    animateScoreNum(scoreEl, totalScore(group));
+  }
+  function refreshGrowthStatus(group){
+    setStatusChips(el('growthGroupChip'), el('growthScoreNum'), group);
+  }
+  function refreshChoiceStatus(group){
+    setStatusChips(el('choiceGroupChip'), el('choiceScoreNum'), group);
+  }
+
+  // ---------- setup screen ----------
+  el('modeToggle').querySelectorAll('.mode-option').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      el('modeToggle').querySelectorAll('.mode-option').forEach(function(b){ b.classList.remove('selected'); });
+      btn.classList.add('selected');
+    });
+  });
+
+  function renderGroupNameInputs(){
+    var count = clamp(parseInt(el('groupCount').value,10)||4, 2, 8);
+    el('groupCount').value = count;
+    var wrap = el('groupNames');
+    wrap.innerHTML = '';
+    for(var i=0;i<count;i++){
+      var field = document.createElement('div');
+      field.className = 'field-row';
+      var label = document.createElement('label');
+      label.innerHTML = '<span class="group-swatch" style="background:'+GROUP_COLORS[i%GROUP_COLORS.length]+'"></span>Group '+(i+1);
+      var input = document.createElement('input');
+      input.type = 'text';
+      input.id = 'gname'+i;
+      input.value = existingName(i) || ('Group '+(i+1));
+      field.appendChild(label);
+      field.appendChild(input);
+      wrap.appendChild(field);
+    }
+  }
+  function existingName(i){ var input = el('gname'+i); return input ? input.value : null; }
+
+  el('groupCount').addEventListener('input', renderGroupNameInputs);
+  el('radius').addEventListener('input', function(){ el('radiusVal').textContent = this.value; });
+  el('rounds').addEventListener('input', function(){ el('roundsVal').textContent = this.value; });
+  renderGroupNameInputs();
+
+  // ---------- start game: setup -> ready ----------
+  el('startBtn').addEventListener('click', function(){
+    var count = clamp(parseInt(el('groupCount').value,10)||4, 2, 8);
+    var radius = clamp(parseInt(el('radius').value,10)||6, 3, 9);
+    var maxRounds = clamp(parseInt(el('rounds').value,10)||16, 6, 30);
+    var allowSetbacks = el('modeToggle').querySelector('.mode-option.selected').dataset.mode === 'hard';
+
+    // Walls and water/nutrient always place a fixed count regardless of
+    // layout, so every group already gets the same number of those. Sunlight
+    // is the exception - a wall can shadow away candidates, so a group's
+    // eligible pool can end up smaller than another's. Generate every
+    // group's walls first, then give them all the same sunlight count: the
+    // smallest pool any group actually has (capped at the usual target).
+    var wallsList = [], sunCandidatesList = [];
+    for(var i=0;i<count;i++){
+      var w = generateWalls(radius);
+      wallsList.push(w);
+      sunCandidatesList.push(sunlightCandidates(radius, w));
+    }
+    var sunCount = tokenCountFor(radius);
+    sunCandidatesList.forEach(function(c){ sunCount = Math.min(sunCount, c.length); });
+
+    var groups = [];
+    for(var i=0;i<count;i++){
+      var nameInput = el('gname'+i);
+      var walls = wallsList[i];
+      var sun = placeSunlight(sunCandidatesList[i], sunCount);
+      groups.push({
+        name: (nameInput && nameInput.value.trim()) || ('Group '+(i+1)),
+        color: GROUP_COLORS[i%GROUP_COLORS.length],
+        cells: {}, // key "col,row" -> 'seed' | 'stem' | 'root'
+        stemOrder: [], rootOrder: [], // insertion order (which cell was grown when)
+        // key "col,row" -> 'water' | 'nutrient' | 'sunlight', consumed on growth (+1 each)
+        resources: Object.assign({}, generateResources(radius), sun),
+        walls: walls, // key "col,row" -> true, permanent
+        litCells: {}, // key "col,row" -> true, permanent marker for "this stem cell caught sunlight"
+        score: 0, // accumulated resource points, separate from occupied-cell count
+        finished: false, // true once every direction is out of legal targets ("fully grown")
+        drawDeck: buildDrawDeck(maxRounds, allowSetbacks), drawIndex: 0 // this group's own shuffled good/bad sequence
+      });
+      groups[i].cells[key(0,0)] = 'seed';
+    }
+    state = { radius: radius, groups: groups, currentIndex: 0, viewingIndex: 0, round: 1, maxRounds: maxRounds, pending: null, allowSetbacks: allowSetbacks };
+
+    hide(el('setupCard'));
+    var list = el('readyList');
+    list.innerHTML = '';
+    groups.forEach(function(g){
+      var chip = document.createElement('div');
+      chip.className = 'ready-chip';
+      chip.innerHTML = '<span class="group-swatch" style="background:'+g.color+'"></span>'+g.name;
+      list.appendChild(chip);
+    });
+    show(el('readyScreen'));
+  });
+
+  el('goBtn').addEventListener('click', function(){
+    hide(el('readyScreen'));
+    show(el('tutorialScreen'));
+    startTutorial();
+  });
+  el('tutorialContinueBtn').addEventListener('click', function(){
+    hide(el('tutorialScreen'));
+    show(el('turnIntro'));
+    showTurnIntro();
+  });
+  el('tutorialSkipBtn').addEventListener('click', function(){
+    hide(el('tutorialScreen'));
+    show(el('turnIntro'));
+    showTurnIntro();
+  });
+
+  // ---------- turn helpers ----------
+  function currentGroup(){ return state.groups[state.currentIndex]; }
+
+  // A group is "fully grown" once every branch (light/wall/root) is out of
+  // legal targets - boxed in by the boundary, or the half is completely
+  // packed. Only checked after growth (a setback only ever removes cells,
+  // which can't newly trigger this).
+  function isGroupMature(group){
+    return Object.keys(BRANCHES).every(function(bk){
+      return computeGrowthTargets(group, { branch: bk }).length === 0;
+    });
+  }
+  function checkMaturity(group){
+    if(group.finished) return false;
+    if(isGroupMature(group)){ group.finished = true; return true; }
+    return false;
+  }
+
+  // ---------- phase 1: turn intro ----------
+  // A "fully grown" group has nothing left to draw, so its turn just shows
+  // that and moves on - no Draw button, no wasted card reveal.
+  function showTurnIntro(){
+    var g = currentGroup();
+    var nameEl = el('introName');
+    nameEl.textContent = g.name;
+    nameEl.style.color = g.color;
+    var drawBtn = el('drawBtn');
+    if(g.finished){
+      el('introRound').textContent = 'Fully Grown! · ' + totalScore(g) + ' pts';
+      drawBtn.textContent = 'Continue →';
+      var advanced = false;
+      var advanceOnce = function(){
+        if(advanced) return;
+        advanced = true;
+        clearTimeout(skipTimer);
+        advanceTurn();
+      };
+      drawBtn.onclick = advanceOnce;
+      var skipTimer = setTimeout(advanceOnce, 2200);
+    } else {
+      el('introRound').textContent = 'Round ' + state.round + ' of ' + state.maxRounds;
+      drawBtn.textContent = 'Draw';
+      drawBtn.onclick = function(){
+        state.viewingIndex = state.currentIndex;
+        state.turnWallBonusUsed = false;
+        startDraw();
+      };
+    }
+  }
+
+  var REDUCE_MOTION = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  // A draw first decides growth vs. setback, then reveals whichever single
+  // outcome it landed on through the same slot-machine screen either way,
+  // so the interface itself never gives away which kind was drawn before
+  // the roll lands. There's no longer a choice of *which* outcome - the
+  // player's agency is entirely in *where* it lands (or, for a setback,
+  // which existing cell gets removed).
+  function startDraw(){
+    var group = currentGroup();
+    var kind = group.drawDeck[group.drawIndex % group.drawDeck.length];
+    group.drawIndex++;
+    if(kind === 'damage'){
+      var picked = SETBACK_OUTCOMES[Math.floor(Math.random()*SETBACK_OUTCOMES.length)];
+      showDrawReveal(picked, function(){
+        if(removableCells(group, picked.part).length === 0){ enterNoEffectPhase(picked); return; }
+        state.pending = { outcome: picked, remaining: 1 };
+        enterGrowthPhase(picked);
+      });
+      return;
+    }
+
+    // Only offer branches that actually have room - this is also what
+    // fixes the "grown to the limit, drew the same direction again, board
+    // has nothing to click" stuck state: a maxed-out branch just never
+    // gets drawn. (In practice a fully-grown group never reaches here at
+    // all, since showTurnIntro skips its draw - this is just a safety net.)
+    var pool = GROWTH_OUTCOMES.filter(function(o){ return computeGrowthTargets(group, o).length > 0; });
+    if(pool.length === 0){
+      checkMaturity(group);
+      var placeholder = { icon:ICON_BLOCKED, title:'Nothing to Grow', desc:'Every direction is already full.' };
+      showDrawReveal(placeholder, function(){ enterNoEffectPhase(placeholder); });
+      return;
+    }
+    var picked = pool[Math.floor(Math.random()*pool.length)];
+    showDrawReveal(picked, function(){
+      state.pending = { outcome: picked, remaining: picked.steps, grown: 0 };
+      enterGrowthPhase(picked);
+    });
+  }
+
+  // Slot-machine style reveal: flick the card through random outcomes,
+  // slowing down, before landing on the one actually drawn. onContinue()
+  // runs once the player taps the landed card.
+  function showDrawReveal(outcome, onContinue){
+    hide(el('turnIntro'));
+    // Show the screen BEFORE measuring the board: while choiceOverlay is
+    // still [hidden], choiceBoardStage has display:none and getBoundingClientRect()
+    // reports 0 width, so the cell grid was getting sized for the wrong
+    // (fallback) width and only filling part of the actual board once it
+    // appeared.
+    show(el('choiceOverlay'));
+    var group = currentGroup();
+    refreshChoiceStatus(group);
+    renderBoardInto(el('choiceBoardStage'), el('choiceCellLayer'), group, false);
+    el('revealOverlay').classList.add('active');
+
+    var wrap = el('choiceOptions');
+    wrap.innerHTML = '';
+    var card = buildChoiceOptionShell();
+    wrap.appendChild(card);
+    var continueBtn = el('revealContinueBtn');
+    hide(continueBtn);
+
+    // Waits for a tap rather than auto-advancing, so the teacher has time
+    // to talk through the event with the class before moving on.
+    function land(){
+      landChoiceOption(card, outcome);
+      sfxLand();
+      show(continueBtn);
+      continueBtn.onclick = function(){
+        hide(continueBtn);
+        el('revealOverlay').classList.remove('active');
+        hide(el('choiceOverlay'));
+        onContinue(outcome);
+      };
+    }
+
+    if(REDUCE_MOTION){ land(); return; }
+
+    card.classList.add('rolling');
+    var delays = [70,70,80,90,100,120,150,190,240,300,380];
+    var i = 0;
+    function tick(){
+      flashChoiceOption(card, OUTCOMES[Math.floor(Math.random()*OUTCOMES.length)]);
+      sfxTick();
+      i++;
+      if(i < delays.length){
+        setTimeout(tick, delays[i]);
+      } else {
+        card.classList.remove('rolling');
+        land();
+      }
+    }
+    setTimeout(tick, delays[0]);
+  }
+
+  function buildChoiceOptionShell(){
+    var card = document.createElement('div');
+    card.className = 'choice-option';
+    card.innerHTML =
+      '<span class="choice-icon"></span>' +
+      '<span class="choice-title"></span>' +
+      '<span class="choice-desc"></span>';
+    return card;
+  }
+
+  // "+1"/"+2"/"-1" badge overlaid on an icon, so the cell count reads at a
+  // glance instead of only being buried in the description text.
+  function stepBadgeHtml(outcome){
+    var steps = outcome.steps;
+    if(!steps) return '';
+    var cls = steps > 0 ? 'positive' : 'negative';
+    return '<span class="step-badge ' + cls + '">' + (steps > 0 ? '+' : '') + steps + '</span>';
+  }
+
+  function flashChoiceOption(btn, outcome){
+    btn.querySelector('.choice-icon').innerHTML = outcome.icon + stepBadgeHtml(outcome);
+    btn.querySelector('.choice-title').textContent = outcome.title;
+  }
+
+  function landChoiceOption(btn, outcome){
+    btn.querySelector('.choice-icon').innerHTML = outcome.icon + stepBadgeHtml(outcome);
+    btn.querySelector('.choice-title').textContent = outcome.title;
+    btn.querySelector('.choice-desc').textContent = outcome.desc;
+    btn.classList.add('landed');
+  }
+
+  // ---------- phase 3: growth screen ----------
+  function enterGrowthPhase(outcome){
+    var g = currentGroup();
+    refreshGrowthStatus(g);
+    el('resultSlot').innerHTML = '';
+    show(el('growthScreen'));
+    updateGrowthInstruction();
+    renderBoard();
+  }
+
+  // Once-per-turn wall bonus: reuses the normal growth click flow via a
+  // one-off outcome on the regular 'stem' branch, so its targets are just
+  // whatever's currently open anywhere around the plant (not only next to
+  // the wall that triggered it) - pickups (a bonus cell can still land on a
+  // sunlight token, say) and maturity checks all work exactly like a normal
+  // step. previousPoints carries the original step's points through so the
+  // final banner shows one combined total, not a separate "wall bonus" line.
+  function startWallBonus(group, previousPoints){
+    var pool = computeGrowthTargets(group, { branch:'stem' });
+    var n = Math.min(1, pool.length);
+    var bonusOutcome = {
+      kind:'growth', branch:'stem', steps: n,
+      icon: ICON_WALL, title:'Wall Bonus!', desc:'Found a wall - pick where to grow!',
+      previousPoints: previousPoints
+    };
+    state.pending = { outcome: bonusOutcome, remaining: n, grown: 0 };
+    updateGrowthInstruction();
+    renderBoard();
+  }
+
+  function eventCardHtml(outcome){
+    return '<div class="event-card">' +
+        '<span class="event-card-icon">'+outcome.icon + stepBadgeHtml(outcome)+'</span>' +
+        '<span class="event-card-text">' +
+          '<span class="event-card-title">'+outcome.title+'</span>' +
+          '<span class="event-card-desc">'+outcome.desc+'</span>' +
+        '</span>' +
+      '</div>';
+  }
+  function updateGrowthInstruction(){
+    el('growthInstruction').innerHTML = eventCardHtml(state.pending.outcome);
+  }
+  // A draw that landed but has nowhere to apply (nothing left to grow, or
+  // nothing left to prune/rot) still shows the board and the event card -
+  // just with a red "No Effect" instead of a tappable target, plus a
+  // denial sound, rather than silently skipping straight to the next turn.
+  function enterNoEffectPhase(outcome){
+    var g = currentGroup();
+    refreshGrowthStatus(g);
+    el('resultSlot').innerHTML = '';
+    show(el('growthScreen'));
+    el('growthInstruction').innerHTML = eventCardHtml(outcome) + '<div class="no-effect-text">No Effect</div>';
+    renderBoard();
+    sfxDenied();
+    finishStep('No Effect', false);
+  }
+
+  // A wall cell is a fixed landmark, not a growable spot - the stem grows
+  // *beside* it (see isAdjacentToWall), never onto it.
+  function computeGrowthTargets(group, outcome){
+    var b = BRANCHES[outcome.branch];
+    var seen = {}, out = [];
+    Object.keys(group.cells).forEach(function(k){
+      var type = group.cells[k];
+      if(type !== 'seed' && type !== b.part) return;
+      var p = k.split(','), acol = +p[0], arow = +p[1];
+      b.deltas.forEach(function(d){
+        var tcol = acol + d.dc, trow = arow + d.dr;
+        var tkey = key(tcol,trow);
+        if(group.cells[tkey] || seen[tkey]) return;
+        if(Math.max(Math.abs(tcol),Math.abs(trow)) > state.radius) return;
+        // Growing toward the seed's row is only meaningful while staying
+        // inside the bowtie shape (|col|<=|row|) - stem's now-bidirectional
+        // deltas can otherwise step just outside it, onto a cell the board
+        // never actually renders.
+        if(Math.abs(tcol) > Math.abs(trow)) return;
+        // Stem never crosses into the lower half and root never crosses
+        // into the upper half, even with all 4 directions now in play -
+        // explicit here rather than only relying on the seed happening to
+        // occupy the sole row-0 crossing cell.
+        if(b.part === 'stem' && trow >= 0) return;
+        if(b.part === 'root' && trow <= 0) return;
+        if(group.walls[tkey]) return;
+        seen[tkey] = true;
+        out.push({ col:tcol, row:trow });
+      });
+    });
+    return out;
+  }
+
+  // Whether (col,row) sits diagonally next to any wall cell - checked right
+  // after a stem cell is placed there, to decide if the once-per-turn wall
+  // bonus should fire.
+  function isAdjacentToWall(group, col, row){
+    return [{dc:-1,dr:-1},{dc:1,dr:-1},{dc:-1,dr:1},{dc:1,dr:1}].some(function(d){
+      return !!group.walls[key(col+d.dc, row+d.dr)];
+    });
+  }
+  // Which cells of the given part a setback can safely remove without
+  // splitting the rest of that part away from the seed - i.e. every other
+  // own-part cell must still reach the seed through a chain of adjacent
+  // own-part cells once this one is gone. A leaf is always safe; anything
+  // that's the sole link between the seed and further-out cells isn't.
+  function removableCells(group, part){
+    var keys = Object.keys(group.cells).filter(function(k){ return group.cells[k] === part; });
+    var deltas = [{dc:-1,dr:-1},{dc:1,dr:-1},{dc:-1,dr:1},{dc:1,dr:1}];
+    function reachableWithout(skipKey){
+      var keySet = {};
+      keys.forEach(function(k){ if(k !== skipKey) keySet[k] = true; });
+      var visited = {}, stack = [key(0,0)];
+      visited[key(0,0)] = true;
+      while(stack.length){
+        var cur = stack.pop();
+        var p = cur.split(','), c = +p[0], r = +p[1];
+        deltas.forEach(function(d){
+          var nk = key(c+d.dc, r+d.dr);
+          if(visited[nk] || !keySet[nk]) return;
+          visited[nk] = true;
+          stack.push(nk);
+        });
+      }
+      return visited;
+    }
+    return keys.filter(function(rk){
+      var visited = reachableWithout(rk);
+      return keys.every(function(k){ return k === rk || visited[k]; });
+    }).map(function(k){ var p = k.split(','); return { col:+p[0], row:+p[1] }; });
+  }
+
+  function currentValidTargets(){
+    if(!state.pending) return [];
+    var group = currentGroup();
+    var outcome = state.pending.outcome;
+    if(outcome.kind === 'growth') return computeGrowthTargets(group, outcome);
+    return removableCells(group, outcome.part);
+  }
+
+  function onCellClick(col,row){
+    if(!state.pending || state.viewingIndex !== state.currentIndex) return;
+    var group = currentGroup();
+    var outcome = state.pending.outcome;
+    var targets = currentValidTargets();
+    var isMatch = targets.some(function(t){ return t.col===col && t.row===row; });
+    if(!isMatch){ flashInvalid(col,row); return; }
+
+    if(outcome.kind === 'growth'){
+      var b = BRANCHES[outcome.branch];
+      var k = key(col,row);
+      group.cells[k] = b.part;
+      (b.part === 'stem' ? group.stemOrder : group.rootOrder).push(k);
+      state.pending.grown++;
+
+      // Landing on a water/nutrient/sunlight token scores it immediately
+      // and consumes it.
+      if(group.resources[k]){
+        var resType = group.resources[k];
+        delete group.resources[k];
+        group.score += 1;
+        state.pending.bonusPoints = (state.pending.bonusPoints || 0) + 1;
+        // Sunlight cells get a little leaf mark, permanently - a small nod
+        // to "this bit of stem is the one that actually caught the light."
+        if(resType === 'sunlight') group.litCells[k] = true;
+      }
+      // A stem cell planted beside a wall triggers a once-per-turn bonus:
+      // 1 more player-picked cell, free. Remembered here and resolved after
+      // this step fully lands, so it can't fire mid-step.
+      if(b.part === 'stem' && !state.turnWallBonusUsed && isAdjacentToWall(group, col, row)){
+        state.pending.wallTrigger = { col: col, row: row };
+      }
+      // Every successful placement raises totalScore by at least 1 (the
+      // cell itself), possibly +1 more for a pickup above - one chime per
+      // click covers both rather than layering two sounds.
+      sfxScoreUp();
+
+      state.pending.remaining--;
+      var stepDone = state.pending.remaining <= 0;
+      // A bonus (grow x2) step can also run out of room after its first
+      // click - if so, stop here instead of leaving an unclickable board.
+      if(!stepDone && computeGrowthTargets(group, outcome).length === 0) stepDone = true;
+
+      if(stepDone){
+        // Check maturity (and clear pending) BEFORE the re-render below,
+        // otherwise renderBoard() recomputes the *next* legal targets for
+        // an outcome that's already over and leaves a highlighted cell
+        // glowing with no click handler still wired to anything.
+        var justMatured = checkMaturity(group);
+        // Just the total points this step added (cells grown + any pickup
+        // bonus combined, plus whatever the original step already earned if
+        // this is the wall-bonus continuation) - one combined figure for the
+        // whole turn, never a separate "wall bonus +N" line.
+        var stepPoints = state.pending.grown + (state.pending.bonusPoints || 0) + (outcome.previousPoints || 0);
+
+        var wallTrigger = state.pending.wallTrigger;
+        state.pending = null;
+        var bonusPool = wallTrigger ? computeGrowthTargets(group, { branch:'stem' }) : [];
+        if(bonusPool.length > 0){
+          state.turnWallBonusUsed = true;
+          renderBoard();
+          refreshGrowthStatus(group);
+          startWallBonus(group, stepPoints);
+          return;
+        }
+
+        var msg = '+' + stepPoints + ' points';
+        if(justMatured) msg += ' — fully grown!';
+
+        renderBoard();
+        refreshGrowthStatus(group);
+        finishStep(msg, justMatured);
+      } else {
+        renderBoard();
+        refreshGrowthStatus(group);
+        updateGrowthInstruction();
+      }
+    } else {
+      var removedKey = key(col,row);
+      delete group.cells[removedKey];
+      var orderArr = outcome.part === 'stem' ? group.stemOrder : group.rootOrder;
+      var idx = orderArr.indexOf(removedKey);
+      if(idx !== -1) orderArr.splice(idx, 1);
+      var msg2 = '-1 points';
+      state.pending = null;
+      sfxSetback();
+      renderBoard();
+      refreshGrowthStatus(group);
+      finishStep(msg2, false);
+    }
+  }
+
+  function flashInvalid(col,row){
+    var target = document.querySelector('#cellLayer [data-col="'+col+'"][data-row="'+row+'"]');
+    if(!target) return;
+    target.classList.remove('shake');
+    void target.offsetWidth;
+    target.classList.add('shake');
+  }
+
+  // True if this group's turn is the very last one before the fixed round
+  // count runs out - drives the "See Results" vs "Next Group" button label.
+  function willGameEnd(){
+    var n = state.groups.length;
+    var next = (state.currentIndex+1) % n;
+    var nextRound = (next <= state.currentIndex) ? state.round+1 : state.round;
+    return nextRound > state.maxRounds;
+  }
+
+  function finishStep(message, celebrated){
+    state.pending = null;
+    if(celebrated) fireCelebration();
+    var isLast = willGameEnd();
+
+    var slot = el('resultSlot');
+    slot.innerHTML = '';
+    var banner = document.createElement('div');
+    banner.className = 'result-banner';
+    var msg = document.createElement('div');
+    msg.textContent = message;
+    var nextBtn = document.createElement('button');
+    nextBtn.className = 'primary-btn';
+    nextBtn.textContent = isLast ? 'See Results' : 'Next Group →';
+    banner.appendChild(msg);
+    banner.appendChild(nextBtn);
+    slot.appendChild(banner);
+
+    // Waits for a tap rather than auto-advancing, same as the reveal card
+    // and the overview screen - so nothing rushes past before the teacher
+    // (or the group itself) has actually seen the result.
+    nextBtn.addEventListener('click', function(){
+      if(isLast){ showResults(); } else { goToNextTurn(); }
+    });
+  }
+
+  function fireCelebration(){
+    var layer = el('celebrateLayer');
+    layer.classList.remove('show');
+    void layer.offsetWidth;
+    layer.classList.add('show');
+  }
+
+  // ---------- between-turn overview ----------
+  function goToNextTurn(){
+    hide(el('growthScreen'));
+    hide(el('turnIntro'));
+    hide(el('choiceOverlay'));
+    el('revealOverlay').classList.remove('active');
+    var justPlayed = currentGroup();
+    // Show BEFORE building the mini boards below: renderBoardInto measures
+    // each stage's real width, and a still-[hidden] ancestor reports 0.
+    show(el('overviewScreen'));
+    var grid = el('overviewGrid');
+    grid.innerHTML = '';
+    state.groups.forEach(function(g){
+      var item = document.createElement('div');
+      item.className = 'overview-item';
+      var stage = document.createElement('div');
+      stage.className = 'mini-stage';
+      if(!g.finished && g === justPlayed) stage.style.boxShadow = '0 0 0 3px ' + g.color + ', var(--shadow)';
+      var inner = document.createElement('div');
+      inner.className = 'board-inner';
+      var layer = document.createElement('div');
+      layer.className = 'cell-layer';
+      inner.appendChild(layer);
+      stage.appendChild(inner);
+      var statusRow = document.createElement('div');
+      statusRow.className = 'status-row mini-status-row';
+      var groupChip = document.createElement('div');
+      groupChip.className = 'group-chip';
+      var matureTxt = g.finished ? ' · Fully Grown' : '';
+      groupChip.innerHTML = '<span class="group-swatch" style="background:'+g.color+'"></span>'+g.name+matureTxt;
+      var scoreChip = document.createElement('div');
+      scoreChip.className = 'score-chip';
+      scoreChip.innerHTML = '<span class="score-num">'+totalScore(g)+'</span><span class="score-label">points</span>';
+      statusRow.appendChild(groupChip); statusRow.appendChild(scoreChip);
+      item.appendChild(stage); item.appendChild(statusRow);
+      grid.appendChild(item);
+      // Same renderer as the real board, so the empty-cell grid (white
+      // background + border lines) looks identical at any size - simplified
+      // so a thumbnail this small just shows sky/soil + the plant, not
+      // resource/wall markers too small to read.
+      renderBoardInto(stage, layer, g, false, true);
+    });
+
+    // Built fresh every time this screen shows, off each group's current
+    // totalScore() - by the time we get here the just-played group's score
+    // already includes that turn, so the ranking and bar lengths are
+    // automatically up to date.
+    var board = el('scoreBoard');
+    board.innerHTML = '';
+    var ranked = state.groups.slice().sort(function(a,b){ return totalScore(b) - totalScore(a); });
+    var maxScore = Math.max(1, totalScore(ranked[0]));
+    var rank = 0, lastScore = null;
+    ranked.forEach(function(g, i){
+      var score = totalScore(g);
+      if(score !== lastScore){ rank = i+1; lastScore = score; }
+      var pct = Math.max(4, Math.round(score / maxScore * 100));
+      var row = document.createElement('div');
+      row.className = 'score-row';
+      row.innerHTML =
+        rankBadgeHtml(rank) +
+        '<span class="score-row-name"><span class="group-swatch" style="background:'+g.color+'"></span>'+g.name+'</span>' +
+        '<span class="score-bar"><span class="score-bar-fill" style="width:0%;background:'+g.color+';"></span></span>' +
+        '<span class="score-row-num mono">0</span>';
+      board.appendChild(row);
+      animateBarWidth(row.querySelector('.score-bar-fill'), pct, i * 90);
+      var numEl = row.querySelector('.score-row-num');
+      if(REDUCE_MOTION) numEl.textContent = score;
+      else setTimeout(function(){ animateScoreNum(numEl, score); }, i * 90);
+    });
+
+    // Waits for the teacher to tap Continue rather than auto-advancing, so
+    // there's time to talk through how everyone's doing before moving on.
+    el('overviewContinueBtn').onclick = function(){
+      hide(el('overviewScreen'));
+      advanceTurn();
+    };
+  }
+
+  // ---------- advance turn: growth -> next intro ----------
+  // Plain round-robin through every group, fully-grown or not - a fully
+  // grown group's turn just shows that in showTurnIntro() and moves on.
+  // The fixed round count is the only end condition: once the rotation
+  // would wrap past state.maxRounds, the game ends instead.
+  function advanceTurn(){
+    var n = state.groups.length;
+    var next = (state.currentIndex+1) % n;
+    if(next <= state.currentIndex) state.round++;
+    state.currentIndex = next;
+    state.viewingIndex = next;
+    state.pending = null;
+    if(state.round > state.maxRounds){ showResults(); return; }
+    hide(el('growthScreen'));
+    show(el('turnIntro'));
+    showTurnIntro();
+  }
+
+  el('endGameBtn').addEventListener('click', showResults);
+
+  function bigRankBadgeHtml(rank){
+    var bg = rank===1 ? 'var(--sun-deep)' : rank===2 ? '#B9C0C7' : rank===3 ? '#C98A4E' : 'var(--panel-2)';
+    var fg = rank<=3 ? '#fff' : 'var(--ink)';
+    return '<div class="result-rank-badge" style="background:'+bg+';color:'+fg+';">'+rank+'</div>';
+  }
+
+  // Ranking is always computed live from each group's current score, not
+  // from a stored finish order - so this works identically whether the
+  // fixed round count ran out or the teacher ended the game early. Tied
+  // scores share a rank (1,1,3...), matching how the manual describes it.
+  // Shows every group's board left-to-right in rank order, same simplified
+  // renderer as the between-round overview, but with a big rank badge over
+  // each one and a distinct gold-tinted backdrop so it doesn't read as just
+  // another overview screen.
+  function showResults(){
+    hide(el('growthScreen'));
+    hide(el('turnIntro'));
+    hide(el('choiceOverlay'));
+    hide(el('overviewScreen'));
+    el('revealOverlay').classList.remove('active');
+    // Show BEFORE building the boards below - renderBoardInto measures
+    // each stage's real width, and a still-hidden ancestor reports 0.
+    show(el('resultsScreen'));
+
+    var sorted = state.groups.slice().sort(function(a,b){ return totalScore(b) - totalScore(a); });
+    var grid = el('resultsGrid');
+    grid.innerHTML = '';
+    var rank = 0, lastScore = null;
+    sorted.forEach(function(g, i){
+      var score = totalScore(g);
+      if(score !== lastScore){ rank = i+1; lastScore = score; }
+      var item = document.createElement('div');
+      item.className = 'result-item' + (rank <= 3 ? ' tier-' + rank : '');
+      item.innerHTML = bigRankBadgeHtml(rank);
+      var stage = document.createElement('div');
+      stage.className = 'mini-stage';
+      var inner = document.createElement('div');
+      inner.className = 'board-inner';
+      var layer = document.createElement('div');
+      layer.className = 'cell-layer';
+      inner.appendChild(layer);
+      stage.appendChild(inner);
+      var statusRow = document.createElement('div');
+      statusRow.className = 'status-row mini-status-row';
+      var groupChip = document.createElement('div');
+      groupChip.className = 'group-chip';
+      groupChip.innerHTML = '<span class="group-swatch" style="background:'+g.color+'"></span>'+g.name;
+      var scoreChip = document.createElement('div');
+      scoreChip.className = 'score-chip';
+      scoreChip.innerHTML = '<span class="score-num">'+score+'</span><span class="score-label">points</span>';
+      statusRow.appendChild(groupChip); statusRow.appendChild(scoreChip);
+      item.appendChild(stage);
+      item.appendChild(statusRow);
+      grid.appendChild(item);
+      renderBoardInto(stage, layer, g, false, true, rank === 1 ? topStemCellKey(g) : null);
+    });
+    sfxResults();
+  }
+
+  // The single furthest-grown stem cell (smallest/most negative row) -
+  // where the winner's flower blooms on the results screen.
+  function topStemCellKey(group){
+    var best = null, bestRow = 0;
+    Object.keys(group.cells).forEach(function(k){
+      if(group.cells[k] !== 'stem') return;
+      var row = +k.split(',')[1];
+      if(row < bestRow){ bestRow = row; best = k; }
+    });
+    return best;
+  }
+
+  function resetToSetup(){
+    el('revealOverlay').classList.remove('active');
+    el('confirmOverlay').classList.remove('active');
+    hide(el('growthScreen')); hide(el('turnIntro')); hide(el('choiceOverlay')); hide(el('readyScreen'));
+    hide(el('tutorialScreen')); hide(el('overviewScreen')); hide(el('resultsScreen'));
+    el('setupCard').hidden = false;
+  }
+
+  el('restartBtn').addEventListener('click', resetToSetup);
+
+  // Available from any screen, not just the end-of-game results card - so
+  // it needs its own confirmation since it can throw away a game in
+  // progress. Uses a custom modal rather than window.confirm() - native
+  // dialogs are blocked inside this sandboxed iframe and would otherwise
+  // just silently do nothing when clicked.
+  el('restartFab').addEventListener('click', function(){
+    if(!state || el('setupCard').hidden === false){ resetToSetup(); return; }
+    el('confirmOverlay').classList.add('active');
+  });
+  el('confirmCancelBtn').addEventListener('click', function(){
+    el('confirmOverlay').classList.remove('active');
+  });
+  el('confirmRestartBtn').addEventListener('click', function(){
+    el('confirmOverlay').classList.remove('active');
+    resetToSetup();
+  });
+
+  // ---------- board rendering ----------
+  // Cells sit on the col+row-even diagonal sublattice in plain screen
+  // coordinates (no container rotation) and are each individually rotated
+  // 45°, sized to their diagonal neighbor's spacing so they tile edge-to-
+  // edge - that tiling fills the whole square stage (corners land in the
+  // stage's own corners), while every tile still reads as a diamond.
+  // Shared by the interactive main board and the read-only board shown on
+  // the growth-choice screen, so "your plant so far" is the exact same full
+  // board the player is about to act on, not a shrunken stand-in.
+  // simplified skips resource/wall icons entirely (just the sky/soil
+  // background and the plant itself) - used for the overview thumbnails,
+  // which are too small for those markers to read clearly anyway.
+  // bloomKey (a "col,row" key) marks a single cell to render a flower on
+  // top of instead of its usual mark - only ever the winner's top stem
+  // cell on the results screen.
+  function renderBoardInto(stageEl, layerEl, group, interactive, simplified, bloomKey){
+    stageEl.classList.toggle('finished', group.finished);
+    // Cell math is sized off board-inner (the colored square inside the
+    // white frame), not stageEl itself, since stageEl now includes the
+    // frame's padding.
+    var innerEl = stageEl.querySelector('.board-inner') || stageEl;
+    var rect = innerEl.getBoundingClientRect();
+    var size = rect.width || 500;
+    var R = state.radius;
+    var spacing = size / (2*R + 2.4);
+    var cellSize = spacing * Math.SQRT2 * 1.04; // slight overlap so diamonds tile with no hairline gaps
+    var cx = size/2, cy = size/2;
+
+    layerEl.innerHTML = '';
+
+    var targets = interactive ? currentValidTargets() : [];
+    var isDamage = interactive && state.pending.outcome.kind === 'damage';
+    var hlPart = interactive ? (isDamage ? state.pending.outcome.part : BRANCHES[state.pending.outcome.branch].part) : null;
+    var spanningParent = buildSpanningParents(group);
+
+    for(var row=-R; row<=R; row++){
+      var maxCol = Math.abs(row); // bowtie: a cell this many steps from the seed row can be at most that far from center column
+      for(var col=-maxCol; col<=maxCol; col+=2){
+        var k = key(col,row);
+        var type = group.cells[k];
+        // Simplified thumbnails skip ungrown cells entirely - just the
+        // sky/soil background shows through, no empty grid diamonds.
+        if(simplified && !type) continue;
+        // A resource token (water/nutrient/sunlight) sits on an otherwise-
+        // empty cell and disappears the moment something grows into it. A
+        // wall is permanent - it never gets grown into, just grown beside.
+        var resource = (!type && !simplified) ? group.resources[k] : null;
+        var isWall = !type && !simplified && group.walls[k];
+        var isTarget = interactive && targets.some(function(t){ return t.col===col && t.row===row; });
+
+        var cls = 'cell ' + (isWall ? 'wall' : (type || 'empty'));
+        if(isTarget) cls += ' ' + (isDamage ? 'hl-danger' : (hlPart==='stem' ? 'hl-stem' : 'hl-root'));
+        if(interactive) cls += ' clickable';
+
+        var d = document.createElement('div');
+        d.className = cls;
+        d.dataset.col = col; d.dataset.row = row;
+        d.style.width = cellSize + 'px';
+        d.style.height = cellSize + 'px';
+        d.style.left = (cx + col * spacing) + 'px';
+        d.style.top = (cy + row * spacing) + 'px';
+        if(type === 'stem' || type === 'root' || type === 'seed'){
+          var fillVar = type === 'stem' ? 'var(--stem)' : type === 'root' ? 'var(--root)' : 'var(--seed)';
+          var vine = connectionShapeSvg(treeConnections(spanningParent, col, row), fillVar);
+          var overlay = type === 'seed' ? '<span class="cell-token">' + ICON_SEED + '</span>'
+            : k === bloomKey ? '<span class="cell-flower">' + ICON_FLOWER + '</span>'
+            : (type === 'stem' && group.litCells[k]) ? '<span class="cell-leaf">' + ICON_LEAF + '</span>' : '';
+          d.innerHTML = vine + overlay;
+        } else if(resource){
+          var resIcon = resource==='water' ? ICON_WATER : resource==='nutrient' ? ICON_NUTRIENT : ICON_SUN;
+          d.innerHTML = '<span class="cell-token">' + resIcon + '</span>';
+        } else if(isWall){
+          d.innerHTML = '<span class="cell-token">' + ICON_WALL + '</span>';
+        }
+        if(interactive){
+          d.setAttribute('role','button');
+          d.setAttribute('tabindex','0');
+          (function(cc,rr){
+            d.addEventListener('click', function(){ onCellClick(cc,rr); });
+            d.addEventListener('keydown', function(e){
+              if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); onCellClick(cc,rr); }
+            });
+          })(col,row);
+        }
+        layerEl.appendChild(d);
+      }
+    }
+  }
+
+  // ---------- interactive tutorial ----------
+  // A tiny hand-built practice group (never touches state.groups) that walks
+  // a player through one real tap per event type - grow stem, grow roots,
+  // the two-cell bonus versions, a wall bonus, both setbacks - before
+  // explaining the win condition. Deliberately its own small engine rather
+  // than reusing the real draw/pending machinery: every step here is
+  // scripted (exact cell, exact outcome) instead of randomly drawn, and it
+  // must never be able to mutate the real game groups mid-setup.
+  var tutorialGroup = null;
+  var tutorialSteps = null;
+  var tutorialStepIndex = 0;
+
+  function buildTutorialGroup(){
+    var g = {
+      name:'Practice', color:'#8CC63F', cells:{}, stemOrder:[], rootOrder:[],
+      resources:{}, walls:{}, litCells:{}, score:0, finished:false
+    };
+    g.cells[key(0,0)] = 'seed';
+    // Resources/wall sit a step or two away from the seed rather than on the
+    // very first growth cell, so each gets tapped in its own dedicated step
+    // later - never on the same tap as a plain "grow stem/root" demo.
+    g.resources[key(-1,-3)] = 'sunlight';
+    g.resources[key(0,2)] = 'water';
+    g.resources[key(2,2)] = 'nutrient';
+    g.walls[key(2,-2)] = true;
+    return g;
+  }
+
+  // Every coordinate below is hand-verified to sit within radius 3 (inside
+  // even the smallest allowed board) and to be a legal diagonal step from a
+  // cell that already exists by the time that step runs. Covers all 6 real
+  // OUTCOMES (stem, root, bonus_stem, bonus_root, prune, rot); sunlight,
+  // water and walls each get their own step, entirely separate from the
+  // grow-event steps, rather than riding along on a "grow stem/root" tap.
+  function buildTutorialSteps(){
+    return [
+      { icon:ICON_STEM_GROW, title:'Grow Stem', desc:'Tap the glowing cell to grow your stem.',
+        taps:[{ key:key(-1,-1), part:'stem' }],
+        after:'Stems grow upward.' },
+      { icon:ICON_STEM_GROW, title:'Strong Growth', desc:'Tap both glowing cells to grow 2 stem cells at once.',
+        taps:[{ key:key(-2,-2), part:'stem' }, { key:key(0,-2), part:'stem' }],
+        after:'2 stem cells in one turn!' },
+      { icon:ICON_ROOT, title:'Grow Roots', desc:'Tap the glowing cell to grow your roots.',
+        taps:[{ key:key(-1,1), part:'root' }],
+        after:'Roots grow downward.' },
+      { icon:ICON_ROOT, title:'Deep Roots', desc:'Tap both glowing cells to grow 2 root cells at once.',
+        taps:[{ key:key(1,1), part:'root' }, { key:key(-2,2), part:'root' }],
+        after:'2 root cells in one turn!' },
+      { icon:ICON_SUN, title:'Sunlight', desc:'Tap the glowing cell to grow onto sunlight.',
+        taps:[{ key:key(-1,-3), part:'stem' }],
+        after:'+1 bonus point!' },
+      { icon:ICON_WATER, title:'Water', desc:'Tap the glowing cell to grow onto water.',
+        taps:[{ key:key(0,2), part:'root' }],
+        after:'+1 bonus point!' },
+      { icon:ICON_NUTRIENT, title:'Nutrients', desc:'Tap the glowing cell to grow onto nutrients.',
+        taps:[{ key:key(2,2), part:'root' }],
+        after:'+1 bonus point!' },
+      { icon:ICON_WALL, title:'Wall', desc:'Tap the glowing cell to grow next to a wall.',
+        taps:[{ key:key(1,-1), part:'stem' }],
+        after:'Watch what happens...' },
+      { icon:ICON_WALL, title:'Wall Bonus!', desc:'Tap the glowing cell for 1 free cell.',
+        taps:[{ key:key(-3,-3), part:'stem' }],
+        after:'A free cell!' }
+    ].concat(state.allowSetbacks ? [
+      { icon:ICON_PRUNE, title:'Pruned!', desc:'Tap the glowing cell to see a setback.',
+        taps:[{ key:key(-3,-3), part:'stem', remove:true }],
+        after:'A stem cell got removed.' },
+      { icon:ICON_ROT, title:'Root Rot!', desc:'Tap the glowing cell.',
+        taps:[{ key:key(-2,2), part:'root', remove:true }],
+        after:'A root cell got removed.' }
+    ] : []);
+  }
+
+  function startTutorial(){
+    tutorialGroup = buildTutorialGroup();
+    tutorialSteps = buildTutorialSteps();
+    tutorialStepIndex = 0;
+    el('tutorialScoreNum').textContent = '0';
+    el('tutorialGoal').hidden = true;
+    el('tutorialContinueBtn').hidden = true;
+    showTutorialStep();
+  }
+
+  function renderTutorialBoard(){
+    renderBoardInto(el('tutorialBoardStage'), el('tutorialCellLayer'), tutorialGroup, false, false);
+  }
+
+  function showTutorialStep(){
+    if(tutorialStepIndex >= tutorialSteps.length){ showTutorialWinCondition(); return; }
+    var step = tutorialSteps[tutorialStepIndex];
+    el('tutorialResultSlot').innerHTML = '';
+    el('tutorialInstruction').innerHTML = eventCardHtml(step);
+    renderTutorialBoard();
+    highlightTutorialTargets(step);
+  }
+
+  function highlightTutorialTargets(step){
+    var layer = el('tutorialCellLayer');
+    step.taps.forEach(function(tap){
+      var p = tap.key.split(',');
+      var cellEl = layer.querySelector('[data-col="'+p[0]+'"][data-row="'+p[1]+'"]');
+      if(!cellEl) return;
+      cellEl.classList.add('clickable', tap.remove ? 'hl-danger' : (tap.part==='stem' ? 'hl-stem' : 'hl-root'));
+      cellEl.setAttribute('role','button');
+      cellEl.setAttribute('tabindex','0');
+      var handler = function(){ handleTutorialTap(step, tap); };
+      cellEl.addEventListener('click', handler);
+      cellEl.addEventListener('keydown', function(e){
+        if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); handler(); }
+      });
+    });
+  }
+
+  function handleTutorialTap(step, tap){
+    if(tap.remove){
+      delete tutorialGroup.cells[tap.key];
+      var order = tap.part==='stem' ? tutorialGroup.stemOrder : tutorialGroup.rootOrder;
+      var idx = order.indexOf(tap.key);
+      if(idx !== -1) order.splice(idx,1);
+    } else {
+      tutorialGroup.cells[tap.key] = tap.part;
+      (tap.part==='stem' ? tutorialGroup.stemOrder : tutorialGroup.rootOrder).push(tap.key);
+      if(tutorialGroup.resources[tap.key]){
+        var resType = tutorialGroup.resources[tap.key];
+        delete tutorialGroup.resources[tap.key];
+        tutorialGroup.score += 1;
+        if(resType === 'sunlight') tutorialGroup.litCells[tap.key] = true;
+      }
+    }
+    if(tap.remove) sfxSetback(); else sfxScoreUp();
+    animateScoreNum(el('tutorialScoreNum'), totalScore(tutorialGroup));
+    step.taps = step.taps.filter(function(t){ return t.key !== tap.key; });
+    if(step.taps.length === 0){
+      renderTutorialBoard();
+      showTutorialAfter(step.after);
+    } else {
+      renderTutorialBoard();
+      highlightTutorialTargets(step);
+    }
+  }
+
+  function showTutorialAfter(message){
+    var slot = el('tutorialResultSlot');
+    slot.innerHTML = '';
+    var banner = document.createElement('div');
+    banner.className = 'result-banner';
+    var msg = document.createElement('div');
+    msg.textContent = message;
+    var nextBtn = document.createElement('button');
+    nextBtn.className = 'primary-btn';
+    nextBtn.textContent = 'Next →';
+    banner.appendChild(msg);
+    banner.appendChild(nextBtn);
+    slot.appendChild(banner);
+    nextBtn.addEventListener('click', function(){
+      tutorialStepIndex++;
+      showTutorialStep();
+    });
+  }
+
+  // Same "just the plant" look as the results screen's mini boards - no
+  // grid diamonds, no wall icon, just what actually grew - topped with the
+  // same winner's-bloom flower, so finishing the tutorial visually pays off
+  // the same way finishing the real game does.
+  function showTutorialWinCondition(){
+    el('tutorialResultSlot').innerHTML = '';
+    el('tutorialInstruction').innerHTML = '<div class="side-title">You’re Ready!</div>';
+    renderBoardInto(el('tutorialBoardStage'), el('tutorialCellLayer'), tutorialGroup, false, true, topStemCellKey(tutorialGroup));
+    el('tutorialGoal').hidden = false;
+    el('tutorialContinueBtn').hidden = false;
+  }
+
+  function renderBoard(){
+    var g = state.groups[state.viewingIndex];
+    var interactive = !!state.pending && state.viewingIndex === state.currentIndex;
+    renderBoardInto(el('boardStage'), el('cellLayer'), g, interactive);
+  }
+
+  window.addEventListener('resize', function(){ if(state && !el('growthScreen').hidden) renderBoard(); });
+})();
+</script>
