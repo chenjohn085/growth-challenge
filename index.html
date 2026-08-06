@@ -395,6 +395,11 @@
     box-shadow:var(--shadow); pointer-events:none; z-index:20;
     animation: bonus-pop-float .9s ease-out forwards;
   }
+  /* Colored to match the resource's own icon color, not a generic "bonus"
+     tint - so the popup itself hints at which resource was just caught. */
+  .bonus-popup.sunlight{ background:#E8C468; color:#4A3B2E; }
+  .bonus-popup.water{ background:#3D7DB0; color:#fff; }
+  .bonus-popup.nutrient{ background:#6FA84E; color:#fff; }
   @keyframes bonus-pop-float{
     0%{ transform:translate(-50%,-100%) scale(.6); opacity:0; }
     15%{ transform:translate(-50%,-135%) scale(1.08); opacity:1; }
@@ -416,7 +421,11 @@
   /* Wall-bonus targets get their own gold flash, distinct from the normal
      green stem highlight - the wall bonus is a special one-off event, not
      just another regular stem growth choice. */
-  .cell.hl-wall{ background:color-mix(in srgb, var(--sun) 40%, var(--panel-2)); box-shadow:inset 0 0 0 3px var(--sun-deep); }
+  /* A vivid, saturated yellow of its own - var(--sun)/--sun-deep are a
+     muted gold (tuned to sit quietly as an icon color) and read as brownish
+     once mixed at low strength into the cream panel background, not the
+     bright "look here" flash a wall bonus needs. */
+  .cell.hl-wall{ background:color-mix(in srgb, #FFCB05 60%, var(--panel-2)); box-shadow:inset 0 0 0 3px #FFCB05, 0 0 0 4px color-mix(in srgb, #FFCB05 45%, transparent); }
   .cell.clickable:hover{ filter:brightness(1.12); }
   .cell.clickable:focus-visible{ outline:3px solid var(--water); outline-offset:2px; z-index:5; }
   @keyframes target-pulse{
@@ -1624,7 +1633,7 @@
         // Sunlight cells get a little leaf mark, permanently - a small nod
         // to "this bit of stem is the one that actually caught the light."
         if(resType === 'sunlight') group.litCells[k] = true;
-        showBonusPopup(el('boardStage'), col, row);
+        showBonusPopup(el('boardStage'), col, row, resType);
       }
       // A stem cell planted beside a wall triggers a once-per-turn bonus:
       // 1 more player-picked cell, free. Remembered here and resolved after
@@ -1971,10 +1980,10 @@
   // cell-layer itself, since cell-layer's whole innerHTML gets wiped and
   // rebuilt on every render and would delete this mid-animation otherwise.
   // Removes itself once its animation finishes.
-  function showBonusPopup(stageEl, col, row){
+  function showBonusPopup(stageEl, col, row, resType){
     var m = boardMetrics(stageEl);
     var popup = document.createElement('div');
-    popup.className = 'bonus-popup';
+    popup.className = 'bonus-popup ' + resType;
     popup.textContent = 'Bonus +1';
     popup.style.left = (m.cx + col*m.spacing) + 'px';
     popup.style.top = (m.cy + row*m.spacing) + 'px';
@@ -2178,7 +2187,7 @@
         tutorialGroup.score += 1;
         if(resType === 'sunlight') tutorialGroup.litCells[tap.key] = true;
         var tapPos = tap.key.split(',');
-        showBonusPopup(el('tutorialBoardStage'), +tapPos[0], +tapPos[1]);
+        showBonusPopup(el('tutorialBoardStage'), +tapPos[0], +tapPos[1], resType);
       }
     }
     if(tap.remove) sfxSetback(); else sfxScoreUp();
