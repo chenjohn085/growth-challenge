@@ -886,15 +886,20 @@
       '<path d="M50 42C50 42 70 50 78 68" stroke="#B58A3D" stroke-width="7" stroke-linecap="round" fill="none"/>' +
       '<path d="M50 42C50 42 46 64 50 92" stroke="#B58A3D" stroke-width="7" stroke-linecap="round" fill="none"/>' +
     '</svg>';
-  var ICON_PRUNE =
+  // Pest damage, not pruning - real-world pruning is usually good for a
+  // plant (encourages bushier growth), so a scissors icon sent the wrong
+  // message for a setback event. A bug actually eating the stem doesn't
+  // have that "actually kind of good for you" ambiguity.
+  var ICON_BUG =
     '<svg class="icon-svg" viewBox="0 0 100 100" aria-hidden="true">' +
-      '<g stroke="#7A828C" stroke-width="9" stroke-linecap="round" fill="none">' +
-        '<line x1="10" y1="12" x2="72" y2="74"/>' +
-        '<line x1="90" y1="12" x2="28" y2="74"/>' +
+      '<path d="M14 70C14 58 24 58 24 70C24 82 34 82 34 70C34 58 44 58 44 70C44 82 54 82 54 70C54 58 64 58 64 70C64 82 74 82 74 70" ' +
+        'fill="none" stroke="#7CB342" stroke-width="14" stroke-linecap="round" stroke-linejoin="round"/>' +
+      '<circle cx="82" cy="66" r="13" fill="#558B2F"/>' +
+      '<g stroke="#558B2F" stroke-width="5" stroke-linecap="round">' +
+        '<line x1="86" y1="56" x2="92" y2="44"/>' +
+        '<line x1="76" y1="56" x2="72" y2="45"/>' +
       '</g>' +
-      '<circle cx="19" cy="82" r="16" fill="none" stroke="#5B636C" stroke-width="10"/>' +
-      '<circle cx="81" cy="82" r="16" fill="none" stroke="#5B636C" stroke-width="10"/>' +
-      '<circle cx="50" cy="50" r="7" fill="#E5897C"/>' +
+      '<circle cx="86" cy="63" r="2.6" fill="#FFFDF8"/>' +
     '</svg>';
   var ICON_ROT =
     '<svg class="icon-svg" viewBox="0 0 100 100" aria-hidden="true">' +
@@ -916,7 +921,7 @@
   var OUTCOMES = [
     { id:'stem', kind:'growth', branch:'stem', steps:1, icon:ICON_STEM_GROW, title:'Grow Stem', desc:'Pick where your stem grows.' },
     { id:'root', kind:'growth', branch:'root', steps:1, icon:ICON_ROOT, title:'Grow Roots', desc:'Pick where your roots grow.' },
-    { id:'prune', kind:'damage', part:'stem', steps:-1, icon:ICON_PRUNE, title:'Pruned!', desc:'Oh no, the stem got cut!' },
+    { id:'pest', kind:'damage', part:'stem', steps:-1, icon:ICON_BUG, title:'Nibbled!', desc:'Oh no, a bug is eating the stem!' },
     { id:'rot', kind:'damage', part:'root', steps:-1, icon:ICON_ROT, title:'Root Rot', desc:'Oh no, the root is rotting!' },
     { id:'bonus_stem', kind:'growth', branch:'stem', steps:2, icon:ICON_STEM_GROW, title:'Strong Growth', desc:'Pick 2 cells to grow into!' },
     { id:'bonus_root', kind:'growth', branch:'root', steps:2, icon:ICON_ROOT, title:'Deep Roots', desc:'Pick 2 cells to grow into!' }
@@ -1514,7 +1519,7 @@
     el('growthInstruction').innerHTML = eventCardHtml(state.pending.outcome);
   }
   // A draw that landed but has nowhere to apply (nothing left to grow, or
-  // nothing left to prune/rot) still shows the board and the event card -
+  // nothing left to remove) still shows the board and the event card -
   // just with a red "No Effect" instead of a tappable target, plus a
   // denial sound, rather than silently skipping straight to the next turn.
   function enterNoEffectPhase(outcome){
@@ -2090,7 +2095,7 @@
   // Every coordinate below is hand-verified to sit within radius 3 (inside
   // even the smallest allowed board) and to be a legal diagonal step from a
   // cell that already exists by the time that step runs. Covers all 6 real
-  // OUTCOMES (stem, root, bonus_stem, bonus_root, prune, rot); sunlight,
+  // OUTCOMES (stem, root, bonus_stem, bonus_root, pest, rot); sunlight,
   // water and walls each get their own step, entirely separate from the
   // grow-event steps, rather than riding along on a "grow stem/root" tap.
   function buildTutorialSteps(){
@@ -2123,7 +2128,7 @@
         taps:[{ key:key(-3,-3), part:'stem' }],
         after:'A free cell!' }
     ].concat(state.allowSetbacks ? [
-      { icon:ICON_PRUNE, title:'Pruned!', desc:'Tap the glowing cell to see a setback.',
+      { icon:ICON_BUG, title:'Nibbled!', desc:'Tap the glowing cell to see a setback.',
         taps:[{ key:key(-3,-3), part:'stem', remove:true }],
         after:'A stem cell got removed.' },
       { icon:ICON_ROT, title:'Root Rot!', desc:'Tap the glowing cell.',
