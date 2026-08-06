@@ -384,11 +384,39 @@
   }
   .cell-flower .icon-svg{ width:120%; height:120%; }
 
+  /* Transient "Bonus +1" callout floating up from a cell that just caught
+     a resource - positioned like a cell (left/top = its center) but never
+     rotated, so the text always reads upright regardless of the diamond
+     grid underneath it. */
+  .bonus-popup{
+    position:absolute; transform:translate(-50%,-100%);
+    background:var(--sun-deep); color:#fff; font-family:var(--font-display); font-weight:800;
+    font-size:.78rem; padding:4px 10px; border-radius:999px; white-space:nowrap;
+    box-shadow:var(--shadow); pointer-events:none; z-index:20;
+    animation: bonus-pop-float .9s ease-out forwards;
+  }
+  @keyframes bonus-pop-float{
+    0%{ transform:translate(-50%,-100%) scale(.6); opacity:0; }
+    15%{ transform:translate(-50%,-135%) scale(1.08); opacity:1; }
+    70%{ transform:translate(-50%,-165%) scale(1); opacity:1; }
+    100%{ transform:translate(-50%,-200%) scale(.95); opacity:0; }
+  }
+  @media (prefers-reduced-motion: reduce){
+    .bonus-popup{ animation: bonus-pop-fade .9s ease-out forwards; }
+  }
+  @keyframes bonus-pop-fade{
+    0%,15%{ opacity:0; } 25%,70%{ opacity:1; } 100%{ opacity:0; }
+  }
+
   .cell.clickable{ cursor:pointer; }
-  .cell.hl-stem, .cell.hl-root, .cell.hl-danger{ z-index:4; animation: target-pulse 1.1s ease-in-out infinite; }
+  .cell.hl-stem, .cell.hl-root, .cell.hl-danger, .cell.hl-wall{ z-index:4; animation: target-pulse 1.1s ease-in-out infinite; }
   .cell.hl-stem{ background:color-mix(in srgb, var(--stem) 35%, var(--panel-2)); box-shadow:inset 0 0 0 3px var(--stem); }
   .cell.hl-root{ background:color-mix(in srgb, var(--root) 35%, var(--panel-2)); box-shadow:inset 0 0 0 3px var(--root); }
   .cell.hl-danger{ box-shadow:inset 0 0 0 3px var(--danger), 0 0 0 4px color-mix(in srgb, var(--danger) 30%, transparent); }
+  /* Wall-bonus targets get their own gold flash, distinct from the normal
+     green stem highlight - the wall bonus is a special one-off event, not
+     just another regular stem growth choice. */
+  .cell.hl-wall{ background:color-mix(in srgb, var(--sun) 40%, var(--panel-2)); box-shadow:inset 0 0 0 3px var(--sun-deep); }
   .cell.clickable:hover{ filter:brightness(1.12); }
   .cell.clickable:focus-visible{ outline:3px solid var(--water); outline-offset:2px; z-index:5; }
   @keyframes target-pulse{
@@ -402,7 +430,7 @@
     30%,50%,70%{ transform:translate(-50%,-50%) rotate(45deg) translateX(-5px); }
     40%,60%{ transform:translate(-50%,-50%) rotate(45deg) translateX(5px); }
   }
-  @media (prefers-reduced-motion: reduce){ .cell.hl-stem, .cell.hl-root, .cell.hl-danger, .cell.shake{ animation:none; } }
+  @media (prefers-reduced-motion: reduce){ .cell.hl-stem, .cell.hl-root, .cell.hl-danger, .cell.hl-wall, .cell.shake{ animation:none; } }
 
   .celebrate{
     position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
@@ -1457,7 +1485,7 @@
     var bonusOutcome = {
       kind:'growth', branch:'stem', steps: n,
       icon: ICON_WALL, title:'Wall Bonus!', desc:'Found a wall - pick where to grow!',
-      previousPoints: previousPoints
+      previousPoints: previousPoints, isWallBonus: true
     };
     state.pending = { outcome: bonusOutcome, remaining: n, grown: 0 };
     updateGrowthInstruction();
@@ -1596,6 +1624,7 @@
         // Sunlight cells get a little leaf mark, permanently - a small nod
         // to "this bit of stem is the one that actually caught the light."
         if(resType === 'sunlight') group.litCells[k] = true;
+        showBonusPopup(el('boardStage'), col, row);
       }
       // A stem cell planted beside a wall triggers a once-per-turn bonus:
       // 1 more player-picked cell, free. Remembered here and resolved after
@@ -1924,23 +1953,46 @@
   // bloomKey (a "col,row" key) marks a single cell to render a flower on
   // top of instead of its usual mark - only ever the winner's top stem
   // cell on the results screen.
-  function renderBoardInto(stageEl, layerEl, group, interactive, simplified, bloomKey){
-    stageEl.classList.toggle('finished', group.finished);
-    // Cell math is sized off board-inner (the colored square inside the
-    // white frame), not stageEl itself, since stageEl now includes the
-    // frame's padding.
+  // Shared by renderBoardInto (sized once per render, then used in a loop
+  // over every cell) and showBonusPopup (a one-off lookup for a single
+  // cell) - both need to convert a (col,row) into a pixel position relative
+  // to board-inner (the colored square inside the white frame, not stageEl
+  // itself, since stageEl includes the frame's padding).
+  function boardMetrics(stageEl){
     var innerEl = stageEl.querySelector('.board-inner') || stageEl;
     var rect = innerEl.getBoundingClientRect();
     var size = rect.width || 500;
-    var R = state.radius;
-    var spacing = size / (2*R + 2.4);
+    var spacing = size / (2*state.radius + 2.4);
+    return { innerEl: innerEl, spacing: spacing, cx: size/2, cy: size/2 };
+  }
+
+  // Floating "Bonus +1" callout where a resource was just picked up -
+  // appended straight to board-inner (a sibling of cell-layer), not inside
+  // cell-layer itself, since cell-layer's whole innerHTML gets wiped and
+  // rebuilt on every render and would delete this mid-animation otherwise.
+  // Removes itself once its animation finishes.
+  function showBonusPopup(stageEl, col, row){
+    var m = boardMetrics(stageEl);
+    var popup = document.createElement('div');
+    popup.className = 'bonus-popup';
+    popup.textContent = 'Bonus +1';
+    popup.style.left = (m.cx + col*m.spacing) + 'px';
+    popup.style.top = (m.cy + row*m.spacing) + 'px';
+    m.innerEl.appendChild(popup);
+    popup.addEventListener('animationend', function(){ popup.remove(); });
+  }
+
+  function renderBoardInto(stageEl, layerEl, group, interactive, simplified, bloomKey){
+    stageEl.classList.toggle('finished', group.finished);
+    var m = boardMetrics(stageEl);
+    var spacing = m.spacing, cx = m.cx, cy = m.cy, R = state.radius;
     var cellSize = spacing * Math.SQRT2 * 1.04; // slight overlap so diamonds tile with no hairline gaps
-    var cx = size/2, cy = size/2;
 
     layerEl.innerHTML = '';
 
     var targets = interactive ? currentValidTargets() : [];
     var isDamage = interactive && state.pending.outcome.kind === 'damage';
+    var isWallBonus = interactive && !!state.pending.outcome.isWallBonus;
     var hlPart = interactive ? (isDamage ? state.pending.outcome.part : BRANCHES[state.pending.outcome.branch].part) : null;
     var spanningParent = buildSpanningParents(group);
 
@@ -1960,7 +2012,7 @@
         var isTarget = interactive && targets.some(function(t){ return t.col===col && t.row===row; });
 
         var cls = 'cell ' + (isWall ? 'wall' : (type || 'empty'));
-        if(isTarget) cls += ' ' + (isDamage ? 'hl-danger' : (hlPart==='stem' ? 'hl-stem' : 'hl-root'));
+        if(isTarget) cls += ' ' + (isDamage ? 'hl-danger' : isWallBonus ? 'hl-wall' : (hlPart==='stem' ? 'hl-stem' : 'hl-root'));
         if(interactive) cls += ' clickable';
 
         var d = document.createElement('div');
@@ -2058,7 +2110,7 @@
       { icon:ICON_WALL, title:'Wall', desc:'Tap the glowing cell to grow next to a wall.',
         taps:[{ key:key(1,-1), part:'stem' }],
         after:'Watch what happens...' },
-      { icon:ICON_WALL, title:'Wall Bonus!', desc:'Tap the glowing cell for 1 free cell.',
+      { icon:ICON_WALL, title:'Wall Bonus!', desc:'Tap the glowing cell for 1 free cell.', isWallBonus: true,
         taps:[{ key:key(-3,-3), part:'stem' }],
         after:'A free cell!' }
     ].concat(state.allowSetbacks ? [
@@ -2100,7 +2152,7 @@
       var p = tap.key.split(',');
       var cellEl = layer.querySelector('[data-col="'+p[0]+'"][data-row="'+p[1]+'"]');
       if(!cellEl) return;
-      cellEl.classList.add('clickable', tap.remove ? 'hl-danger' : (tap.part==='stem' ? 'hl-stem' : 'hl-root'));
+      cellEl.classList.add('clickable', tap.remove ? 'hl-danger' : step.isWallBonus ? 'hl-wall' : (tap.part==='stem' ? 'hl-stem' : 'hl-root'));
       cellEl.setAttribute('role','button');
       cellEl.setAttribute('tabindex','0');
       var handler = function(){ handleTutorialTap(step, tap); };
@@ -2125,6 +2177,8 @@
         delete tutorialGroup.resources[tap.key];
         tutorialGroup.score += 1;
         if(resType === 'sunlight') tutorialGroup.litCells[tap.key] = true;
+        var tapPos = tap.key.split(',');
+        showBonusPopup(el('tutorialBoardStage'), +tapPos[0], +tapPos[1]);
       }
     }
     if(tap.remove) sfxSetback(); else sfxScoreUp();
