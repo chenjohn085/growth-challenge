@@ -168,7 +168,7 @@
     font-family:var(--font-display); font-size:2rem; font-weight:800;
     animation: name-in .4s cubic-bezier(.2,1.6,.3,1) both;
   }
-  .turn-intro .name .vs-label{ color:var(--ink-soft); font-size:1.2rem; font-weight:700; margin:0 .3em; }
+  .turn-intro .name .pair-sep{ color:var(--ink-soft); font-size:1.2rem; font-weight:700; margin:0 .3em; }
   @keyframes name-in{ from{ transform:scale(.85); opacity:0;} to{ transform:scale(1); opacity:1;} }
   @media (prefers-reduced-motion: reduce){ .turn-intro .name{ animation:none; } }
 
@@ -1404,7 +1404,7 @@
     nameEl.innerHTML = slots.map(function(s){
       var g = groupForSlot(s);
       return '<span style="color:'+g.color+'">'+g.name+'</span>';
-    }).join('<span class="vs-label">vs</span>');
+    }).join('<span class="pair-sep">·</span>');
     var drawBtn = el('drawBtn');
     var allFinished = slots.every(function(s){ return groupForSlot(s).finished; });
     if(allFinished){
