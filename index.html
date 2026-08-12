@@ -64,6 +64,14 @@
      between screens - just a plain narrow centered column, not a
      viewport-breakout. */
   .app{ max-width:840px; margin:0 auto; padding:22px 20px 56px; box-sizing:border-box; }
+  /* Widened variants for a turn with 3 or 4 groups active at once, so all
+     boards can fit on one row (given enough screen width - .choice-side/
+     .growth-side still wrap to two rows below this) instead of always
+     wrapping at the default 2-column width. Toggled per-turn in
+     startPairTurn() since a leftover remainder batch can be smaller than
+     the chosen "Groups per Turn" size. */
+  .app.cols-3{ max-width:1160px; }
+  .app.cols-4{ max-width:1560px; }
 
   .masthead{ margin-bottom:18px; text-align:center; }
   .masthead h1{
@@ -464,29 +472,37 @@
   .end-game-row{ text-align:center; margin-top:10px; }
 
   /* ---------- between-turn overview ---------- */
-  .overview-screen{ display:flex; flex-direction:column; align-items:center; gap:18px; padding:16px 0; text-align:center; }
+  /* Same viewport-breakout trick as .results-screen below - needed so
+     .overview-grid has room for 4 mini-stages per row regardless of
+     whichever .app.cols-* width (or lack of one) was left over from the
+     pair/batch that was just played. */
+  .overview-screen{
+    display:flex; flex-direction:column; align-items:center; gap:18px; text-align:center;
+    width:100vw; margin-left:calc(50% - 50vw); margin-right:calc(50% - 50vw); padding:16px 20px 0;
+  }
   .overview-screen h2{ font-size:1.3rem; font-weight:800; }
-  /* flex + justify-content:center (not CSS grid's fixed repeat(N,...))
-     because grid packs a short last row against the left edge instead of
-     centering it. .mini-stage below has a fixed 280px width, so instead of
-     computing a flex-basis percentage (which fought that fixed width and
-     made rows overlap), the container itself is just capped to fit exactly
-     2 of them per row - it wraps to 1-per-row on its own on a narrow
-     screen, no extra media query needed. */
-  .overview-grid{ display:flex; flex-wrap:wrap; justify-content:center; gap:26px; width:100%; max-width:586px; }
+  /* Fixed 4-column grid (not flex-wrap) so the row always holds exactly 4
+     thumbnails, in reading/rank order, regardless of group count or window
+     width - columns shrink together (via .mini-stage's fluid width below)
+     on a narrower screen instead of the row dropping to 3-per-row, and a
+     short last row still starts flush left under column 1 instead of
+     drifting to center. max-width caps how big the thumbnails get on a
+     very wide screen (1210px / 4 cols ~= the original fixed 280px). */
+  .overview-grid{ display:grid; grid-template-columns:repeat(4, 1fr); gap:26px; width:100%; max-width:1210px; }
   .overview-item{ display:flex; flex-direction:column; align-items:center; gap:12px; }
   .mini-stage{
-    position:relative; width:280px; height:280px; background:var(--card-bg); padding:8px; box-sizing:border-box;
+    position:relative; width:100%; aspect-ratio:1/1; background:var(--card-bg); padding:8px; box-sizing:border-box;
     border:2px solid var(--line-strong); border-radius:var(--radius-md);
   }
   .mini-stage .board-inner{ border-radius:12px; }
   /* Same group-chip/score-chip pattern as the growth screen, just scaled
-     down to fit a 280px-wide thumbnail. */
-  .mini-status-row{ max-width:280px; gap:10px; }
+     down to fit the thumbnail - width tracks .mini-stage's fluid width
+     above it (both fill the grid column) instead of a fixed px cap. */
+  .mini-status-row{ max-width:100%; gap:10px; }
   .mini-status-row .group-chip{
     font-size:1.08rem; padding:10px 12px; gap:6px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
   }
-  .mini-status-row .score-chip{ padding:6px 12px; }
+  .mini-status-row .score-chip{ padding:6px 12px; min-width:0; }
   .mini-status-row .score-chip .score-num{ font-size:1.65rem; }
   .mini-status-row .score-chip .score-label{ font-size:.68rem; }
   /* Score comparison, ranked and re-drawn fresh every time this screen
@@ -535,12 +551,13 @@
   .results-icon{ width:60px; height:60px; }
   .results-icon .icon-svg{ width:100%; height:100%; }
   .results-screen h2{ font-size:1.8rem; font-weight:800; }
-  /* Left-to-right, 1st place first - flex-start (not centered/wrapped
-     evenly) keeps that reading order clear even when it wraps to a second
-     row on a narrow screen. */
+  /* Left-to-right, 1st place first - fixed 4-column grid (see
+     .overview-grid for why: keeps reading order clear on a short last row
+     and holds the row at exactly 4 regardless of window width) instead of
+     flex-wrap. */
   .results-grid{
-    display:flex; flex-wrap:wrap; justify-content:center; align-items:flex-start; gap:24px;
-    width:100%; max-width:1160px;
+    display:grid; grid-template-columns:repeat(4, 1fr); gap:24px;
+    width:100%; max-width:1210px;
   }
   .result-item{ display:flex; flex-direction:column; align-items:center; gap:10px; }
   .result-rank-badge{
@@ -554,9 +571,19 @@
   }
   .result-item.tier-2 .mini-stage{ border-color:#B9C0C7; }
   .result-item.tier-3 .mini-stage{ border-color:#C98A4E; }
+
+  /* Below this, a 4-wide column is too narrow for the "POINTS" label under
+     each thumbnail - it's a single word that can't wrap or ellipsis, so it
+     sets a hard minimum column width and 4 columns would spill out of the
+     page past this point. Drop to 2 columns instead of letting that
+     overflow happen. Phone-width only; every desktop/tablet/projector case
+     above stays at 4. */
+  @media (max-width:900px){
+    .overview-grid, .results-grid{ grid-template-columns:repeat(2, 1fr); }
+  }
 </style>
 
-<div class="app">
+<div class="app" id="app">
   <div class="masthead">
     <h1>Growth Challenge</h1>
   </div>
@@ -579,6 +606,11 @@
     <div class="field-row">
       <label for="groupCount">Number of Groups</label>
       <input type="number" id="groupCount" min="2" max="8" value="4">
+    </div>
+    <div class="field-row">
+      <label for="turnSize">Groups per Turn: <span id="turnSizeVal" class="mono">2</span></label>
+      <input type="range" id="turnSize" min="1" max="4" value="2">
+      <div class="radius-hint">How many groups play at the same time each turn</div>
     </div>
     <div id="groupNames" class="group-name-grid"></div>
     <div class="field-row">
@@ -658,6 +690,26 @@
         </div>
         <div class="choice-options" id="choiceOptionsB"></div>
       </div>
+      <div class="choice-side" id="choiceSideC">
+        <div class="status-row">
+          <div class="group-chip" id="choiceGroupChipC"></div>
+          <div class="score-chip"><span class="score-num" id="choiceScoreNumC">0</span><span class="score-label">points</span></div>
+        </div>
+        <div class="board-stage" id="choiceBoardStageC">
+          <div class="board-inner"><div id="choiceCellLayerC" class="cell-layer"></div></div>
+        </div>
+        <div class="choice-options" id="choiceOptionsC"></div>
+      </div>
+      <div class="choice-side" id="choiceSideD">
+        <div class="status-row">
+          <div class="group-chip" id="choiceGroupChipD"></div>
+          <div class="score-chip"><span class="score-num" id="choiceScoreNumD">0</span><span class="score-label">points</span></div>
+        </div>
+        <div class="board-stage" id="choiceBoardStageD">
+          <div class="board-inner"><div id="choiceCellLayerD" class="cell-layer"></div></div>
+        </div>
+        <div class="choice-options" id="choiceOptionsD"></div>
+      </div>
     </div>
     <div class="pair-status-line" id="choiceStatusLine"></div>
     <button class="primary-btn" id="choiceNextBtn" hidden>Next →</button>
@@ -709,6 +761,46 @@
           </div>
         </div>
         <div id="resultSlotB"></div>
+      </div>
+      <div class="growth-side" id="growthSideC">
+        <div class="status-row">
+          <div class="group-chip" id="growthGroupChipC"></div>
+          <div class="score-chip"><span class="score-num" id="growthScoreNumC">0</span><span class="score-label">points</span></div>
+        </div>
+        <div class="growth-instruction" id="growthInstructionC"></div>
+        <div class="board-stage" id="boardStageC">
+          <div class="board-inner">
+            <div id="cellLayerC" class="cell-layer"></div>
+            <div class="celebrate" id="celebrateLayerC">
+              <svg class="icon-svg" viewBox="0 0 100 100" aria-hidden="true">
+                <path d="M50 2L59.9 40.1L98 50L59.9 59.9L50 98L40.1 59.9L2 50L40.1 40.1Z" fill="#F0B93E"/>
+                <circle cx="80" cy="20" r="6" fill="#F5C452"/>
+                <circle cx="18" cy="78" r="4.5" fill="#F5C452"/>
+              </svg>
+            </div>
+          </div>
+        </div>
+        <div id="resultSlotC"></div>
+      </div>
+      <div class="growth-side" id="growthSideD">
+        <div class="status-row">
+          <div class="group-chip" id="growthGroupChipD"></div>
+          <div class="score-chip"><span class="score-num" id="growthScoreNumD">0</span><span class="score-label">points</span></div>
+        </div>
+        <div class="growth-instruction" id="growthInstructionD"></div>
+        <div class="board-stage" id="boardStageD">
+          <div class="board-inner">
+            <div id="cellLayerD" class="cell-layer"></div>
+            <div class="celebrate" id="celebrateLayerD">
+              <svg class="icon-svg" viewBox="0 0 100 100" aria-hidden="true">
+                <path d="M50 2L59.9 40.1L98 50L59.9 59.9L50 98L40.1 59.9L2 50L40.1 40.1Z" fill="#F0B93E"/>
+                <circle cx="80" cy="20" r="6" fill="#F5C452"/>
+                <circle cx="18" cy="78" r="4.5" fill="#F5C452"/>
+              </svg>
+            </div>
+          </div>
+        </div>
+        <div id="resultSlotD"></div>
       </div>
     </div>
     <div class="pair-status-line" id="growthStatusLine"></div>
@@ -1251,6 +1343,7 @@
   el('groupCount').addEventListener('input', renderGroupNameInputs);
   el('radius').addEventListener('input', function(){ el('radiusVal').textContent = this.value; });
   el('rounds').addEventListener('input', function(){ el('roundsVal').textContent = this.value; });
+  el('turnSize').addEventListener('input', function(){ el('turnSizeVal').textContent = this.value; });
   renderGroupNameInputs();
 
   // ---------- start game: setup -> ready ----------
@@ -1258,6 +1351,7 @@
     var count = clamp(parseInt(el('groupCount').value,10)||4, 2, 8);
     var radius = clamp(parseInt(el('radius').value,10)||6, 3, 9);
     var maxRounds = clamp(parseInt(el('rounds').value,10)||16, 6, 30);
+    var turnSize = clamp(parseInt(el('turnSize').value,10)||2, 1, SLOTS.length);
     var allowSetbacks = el('modeToggle').querySelector('.mode-option.selected').dataset.mode === 'hard';
 
     // Walls and water/nutrient always place a fixed count regardless of
@@ -1295,7 +1389,7 @@
       });
       groups[i].cells[key(0,0)] = 'seed';
     }
-    state = { radius: radius, groups: groups, pairs: buildPairs(groups), pairIndex: 0, round: 1, maxRounds: maxRounds, allowSetbacks: allowSetbacks, turn: null };
+    state = { radius: radius, groups: groups, pairs: buildPairs(groups, turnSize), pairIndex: 0, round: 1, maxRounds: maxRounds, allowSetbacks: allowSetbacks, turn: null };
 
     hide(el('setupCard'));
     var list = el('readyList');
@@ -1326,22 +1420,26 @@
   });
 
   // ---------- turn helpers ----------
-  // Two groups act at once, paired up in setup order (1st+2nd, 3rd+4th, ...);
-  // an odd group out plays a "pair of one" alone rather than waiting for a
-  // partner. Built once at game start - pairing never reshuffles mid-game.
-  function buildPairs(groups){
+  // `size` groups act at once (1-4, chosen at setup as "Groups per Turn"),
+  // batched in setup order (1st..size-th together, next batch after, ...);
+  // a leftover remainder smaller than `size` still plays together, just
+  // with fewer active slots. Built once at game start - batching never
+  // reshuffles mid-game.
+  function buildPairs(groups, size){
     var pairs = [];
-    for(var i=0; i<groups.length; i+=2){
-      pairs.push(i+1 < groups.length ? [i,i+1] : [i]);
+    for(var i=0; i<groups.length; i+=size){
+      var batch = [];
+      for(var j=i; j<Math.min(i+size, groups.length); j++) batch.push(j);
+      pairs.push(batch);
     }
     return pairs;
   }
-  var SLOTS = ['A','B'];
+  var SLOTS = ['A','B','C','D'];
   function currentPair(){ return state.pairs[state.pairIndex]; }
-  // Which slot letters are actually in play this turn - just ['A'] for a
-  // solo leftover group.
-  function activeSlots(){ return currentPair().length === 2 ? SLOTS : ['A']; }
-  function groupForSlot(slot){ return state.groups[currentPair()[slot === 'A' ? 0 : 1]]; }
+  // Which slot letters are actually in play this turn - a prefix of SLOTS
+  // matching this batch's size (shorter for a leftover remainder batch).
+  function activeSlots(){ return SLOTS.slice(0, currentPair().length); }
+  function groupForSlot(slot){ return state.groups[currentPair()[SLOTS.indexOf(slot)]]; }
 
   // A group is "fully grown" once every branch (light/wall/root) is out of
   // legal targets - boxed in by the boundary, or the half is completely
@@ -1384,11 +1482,23 @@
         drawDone: g.finished, growthDone: g.finished
       };
     });
-    // A solo leftover group just gets the B column hidden - the board stays
-    // exactly the same size as it is in a real pair, just centered alone.
-    var solo = activeSlots().length === 1;
-    el('choiceSideB').hidden = solo;
-    el('growthSideB').hidden = solo;
+    // Slots beyond this batch's size (always true for at least B/C/D when
+    // "Groups per Turn" < 4, and also for a leftover remainder batch
+    // smaller than the chosen size) just get their column hidden - each
+    // board stays exactly the same size either way, only the surrounding
+    // whitespace changes.
+    var active = activeSlots();
+    SLOTS.forEach(function(slot){
+      var hidden = active.indexOf(slot) === -1;
+      el('choiceSide'+slot).hidden = hidden;
+      el('growthSide'+slot).hidden = hidden;
+    });
+    // Widen the whole page for a 3-4 group batch so those columns have room
+    // to sit in one row - see .app.cols-3/.app.cols-4. A leftover remainder
+    // batch smaller than the chosen turn size falls back to the default
+    // narrower width.
+    el('app').classList.remove('cols-3','cols-4');
+    if(active.length >= 3) el('app').classList.add('cols-'+active.length);
     showTurnIntro();
   }
 

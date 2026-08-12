@@ -37,14 +37,16 @@ Each screen is a top-level `<div>` toggled via `show()`/`hide()` (just
 `hidden` attribute). One `state` object (created in `el('startBtn')`'s
 handler) drives everything from setup onward; `null` before that.
 
-Two groups act **at once**, paired up in setup order (1st+2nd, 3rd+4th,
-...) - an odd group out plays a "pair of one" alone. Every screen from
-`turnIntro` onward is duplicated into two DOM columns, slot `'A'` and
-slot `'B'` (ids are just the base id + the slot letter, e.g.
-`boardStageA`/`boardStageB` - see `elSlot(base, slot)`), driven by
-`state.turn.A`/`state.turn.B`. A solo leftover group just gets slot `B`
-hidden (`.solo` class widens slot A back to roughly the original
-single-group board size - see `startPairTurn()`).
+1-4 groups act **at once** (setup's "Groups per Turn" slider, default 2),
+batched in setup order (1st..Nth together, next batch after, ...) - a
+leftover remainder smaller than the chosen size still plays together, just
+with fewer active slots. Every screen from `turnIntro` onward is duplicated
+into four DOM columns, slots `'A'`-`'D'` (ids are just the base id + the
+slot letter, e.g. `boardStageA`/`boardStageB`/`boardStageC`/`boardStageD` -
+see `elSlot(base, slot)`), driven by `state.turn.A`/`.B`/`.C`/`.D`. Slots
+beyond the current batch's size just get hidden (see `startPairTurn()`) -
+each board stays exactly the same size either way, only the surrounding
+whitespace changes.
 
 ```
 setupCard → readyScreen → tutorialScreen (interactive) → turnIntro
@@ -81,11 +83,13 @@ state = {
 }
 ```
 
-`state.pairs` is built once at game start (`buildPairs()`), e.g. for 5
-groups: `[[0,1],[2,3],[4]]` - pairing never reshuffles mid-game.
-`activeSlots()` returns `['A','B']` or just `['A']` for a solo pair.
+`state.pairs` is built once at game start (`buildPairs(groups, turnSize)`),
+e.g. for 5 groups with `turnSize=2`: `[[0,1],[2,3],[4]]` - batching never
+reshuffles mid-game. `activeSlots()` returns `SLOTS.slice(0,
+currentPair().length)` (`SLOTS = ['A','B','C','D']`), so a leftover batch
+smaller than `turnSize` just gets a shorter prefix of slots.
 `groupForSlot(slot)` resolves a slot letter to the actual group object for
-the pair currently at `state.pairIndex`.
+the batch currently at `state.pairIndex`.
 
 `state.turn[slot]` (rebuilt fresh every pair by `startPairTurn()`):
 
@@ -265,6 +269,12 @@ setup card). Stored as `allowSetbacks` on `state`. Hard = setbacks can be
 drawn (25% of a group's deck). Easy = deck is 100% growth, and the
 interactive tutorial skips its Pruned!/Root Rot! steps accordingly
 (`buildTutorialSteps()` reads `state.allowSetbacks`).
+
+Setup also has a "Groups per Turn" slider (`#turnSize`, range 1-4, default
+2) controlling how many groups act at once per batch - read once at
+`startBtn` time and passed straight into `buildPairs(groups, turnSize)`;
+not stored on `state` itself since `state.pairs` already bakes the batching
+in.
 
 ## Interactive tutorial
 
