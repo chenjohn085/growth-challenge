@@ -1453,7 +1453,7 @@
     } else {
       hide(btn);
       statusEl.textContent = slots.length > 1
-        ? ('等待 ' + notDone.map(function(s){ return groupForSlot(s).name; }).join(' / ') + ' 組...')
+        ? ('Waiting for ' + notDone.map(function(s){ return groupForSlot(s).name; }).join(' / ') + '...')
         : '';
     }
   }
