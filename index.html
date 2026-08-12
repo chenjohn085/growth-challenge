@@ -160,26 +160,17 @@
 
   /* ---------- turn intro ---------- */
   .turn-intro{
-    display:flex; flex-direction:column; align-items:center; justify-content:center; gap:22px;
+    display:flex; flex-direction:column; align-items:center; justify-content:center; gap:26px;
     min-height:46vh; text-align:center;
   }
-  /* Fixed at roughly the same height the board's own center lands at on the
-     growth screen (the board dominates that layout, so its middle sits
-     close to the viewport's vertical center) - so tapping Draw and then
-     tapping cells on the board don't jump between a high spot and a low
-     one. Big touch display in a classroom, so a consistent tap height
-     matters more than technically being reachable-but-in-a-different-spot
-     every screen. */
-  #drawBtn{
-    position:fixed; left:50%; top:50vh; transform:translate(-50%,-50%); z-index:15;
-  }
+  .turn-intro .round{ color:var(--ink-soft); font-size:.95rem; font-weight:700; letter-spacing:.03em; }
   .turn-intro .name{
-    font-family:var(--font-display); font-size:2.3rem; font-weight:800;
+    font-family:var(--font-display); font-size:2rem; font-weight:800;
     animation: name-in .4s cubic-bezier(.2,1.6,.3,1) both;
   }
+  .turn-intro .name .vs-label{ color:var(--ink-soft); font-size:1.2rem; font-weight:700; margin:0 .3em; }
   @keyframes name-in{ from{ transform:scale(.85); opacity:0;} to{ transform:scale(1); opacity:1;} }
   @media (prefers-reduced-motion: reduce){ .turn-intro .name{ animation:none; } }
-  .turn-intro .round{ color:var(--ink-soft); font-size:.95rem; font-weight:700; letter-spacing:.03em; }
 
   /* ---------- outcome modal (setbacks only) ---------- */
   /* Shared by the slot-machine roll/land states below - one draw button
@@ -198,20 +189,27 @@
      never sits on top of the board, just replaces the current screen. */
   /* .app is already the full breakout width now, so this just fills it. */
   .choice-screen{
-    display:flex; flex-direction:column; align-items:center; gap:16px; text-align:center;
+    display:flex; flex-direction:column; align-items:center; gap:20px; text-align:center;
     width:100%;
   }
-  /* Board, then group pill/title/card, stacked in one centered column -
-     there's no second option needing its own side-by-side column anymore
-     now that a draw only ever reveals one outcome. */
-  .choice-layout{
-    display:flex; flex-direction:column; align-items:center; gap:16px; width:100%;
-  }
-  .choice-status{ display:flex; flex-direction:column; align-items:center; gap:10px; width:100%; }
+  /* Two independent columns, one per side of the pair - #choiceSideB hidden
+     via JS for a solo leftover group, collapsing back to one centered
+     column - board size stays exactly the same either way (see
+     .board-stage below), only the surrounding whitespace changes. */
+  .choice-pair{ display:flex; flex-wrap:wrap; gap:28px; align-items:flex-start; justify-content:center; width:100%; }
+  .choice-side{ display:flex; flex-direction:column; align-items:center; gap:14px; flex:1 1 340px; min-width:0; max-width:400px; }
   .side-title{ font-size:1.1rem; font-weight:800; text-align:center; }
   .choice-options{
     display:flex; flex-direction:column; gap:14px; width:100%; justify-content:center;
   }
+  /* Shared "everyone's ready" gate under both columns - either a waiting
+     note naming whoever hasn't finished yet, or the Next button once both
+     sides are done. */
+  .pair-status-line{ font-weight:700; color:var(--ink-soft); font-size:.95rem; min-height:1.4em; }
+  /* A side that's finished its own step but is still waiting on the other -
+     just blocks further taps, no dimming/fading (a hazy board read as
+     broken rather than "done and waiting"). */
+  .choice-side.side-done, .growth-side.side-done{ pointer-events:none; }
   /* Purely a display card now (the draw only ever lands on one outcome,
      nothing to pick), so no hover/cursor affordance. */
   .choice-option{
@@ -253,6 +251,10 @@
     display:flex; flex-direction:column; gap:14px; align-items:center; text-align:center;
     width:100%;
   }
+  /* Same two-column pattern as .choice-pair - #growthSideB hidden via JS for
+     a solo leftover group. */
+  .growth-pair{ display:flex; flex-wrap:wrap; gap:28px; align-items:flex-start; justify-content:center; width:100%; }
+  .growth-side{ display:flex; flex-direction:column; gap:14px; align-items:center; text-align:center; flex:1 1 340px; min-width:0; max-width:400px; }
   /* Group name and score as two separate side-by-side chips, rather than
      one combined "Name · N pts" pill - the score reads at a glance instead
      of being buried in smaller text next to the name. */
@@ -283,6 +285,7 @@
   .event-card-title{ font-family:var(--font-display); font-weight:800; font-size:1rem; }
   .event-card-desc{ font-size:.85rem; color:var(--ink-soft); }
   .no-effect-text{ font-family:var(--font-display); font-weight:800; font-size:.95rem; color:var(--danger-deep); }
+  .fully-grown-note{ font-family:var(--font-display); font-weight:800; font-size:.95rem; color:var(--sun-deep); padding:10px 0; }
 
   /* Reference design: the board itself is four solid quadrant colors
      (sun/wall on top, nutrient/water on bottom) filling the whole square.
@@ -499,20 +502,7 @@
   @media (prefers-reduced-motion: reduce){ .score-bar-fill{ transition:none; } }
   .score-row-num{ flex:0 0 38px; text-align:right; font-weight:800; }
 
-  /* Popup for the draw reveal - a fixed overlay so the card always shows
-     centered in the viewport, never pushed off-screen below a tall board. */
-  .reveal-overlay{
-    display:none; position:fixed; inset:0; background:rgba(10,20,10,.5); backdrop-filter:blur(2px);
-    align-items:center; justify-content:center; padding:20px; z-index:22;
-  }
-  .reveal-overlay.active{ display:flex; }
-  .reveal-card{
-    background:var(--card-bg); border-radius:var(--radius-lg); padding:22px; max-width:340px; width:100%;
-    box-shadow:var(--shadow); display:flex; flex-direction:column; align-items:center; gap:14px;
-    border:2px solid var(--line-strong);
-  }
-
-  /* Same fixed-overlay pattern, used for the restart confirm prompt. */
+  /* Same fixed-overlay pattern as before, used for the restart confirm prompt. */
   .confirm-overlay{
     display:none; position:fixed; inset:0; background:rgba(10,20,10,.5); backdrop-filter:blur(2px);
     align-items:center; justify-content:center; padding:20px; z-index:30;
@@ -631,51 +621,98 @@
   </div>
 
   <!-- ===== 3. turn intro ===== -->
+  <!-- Just announces which pair (two groups, matched up in setup order) is
+       up - a leftover odd group plays a "pair of one" and this just shows
+       its name alone. The actual per-group Draw buttons live on the choice
+       screen next, so each group can draw independently once there. -->
   <div class="turn-intro" id="turnIntro" hidden>
     <div class="name" id="introName"></div>
     <div class="round mono" id="introRound"></div>
-    <button class="primary-btn" id="drawBtn">Draw</button>
+    <button class="primary-btn" id="drawBtn">Draw →</button>
   </div>
 
   <!-- ===== 4. draw reveal (growth choice or setback - same screen either way) ===== -->
-  <!-- The board stays inline (still part of .app, same as growthScreen), but
-       the reveal card itself is a fixed popup (#revealOverlay below) so it's
-       always centered in the viewport - never pushed below the fold by a
-       tall board on a short screen. -->
+  <!-- No longer a fixed popup - two boards are on screen together now, so
+       each side's card lives inline in its own column instead of a single
+       viewport-centered overlay. Lands automatically (no per-side "Continue"
+       tap) and the pair-status line below decides when both are ready. -->
   <div class="choice-screen" id="choiceOverlay" hidden>
-    <div class="choice-layout">
-      <div class="choice-status">
-        <div class="board-stage wide" id="choiceBoardStage">
-          <div class="board-inner"><div id="choiceCellLayer" class="cell-layer"></div></div>
+    <div class="choice-pair" id="choicePair">
+      <div class="choice-side" id="choiceSideA">
+        <div class="status-row">
+          <div class="group-chip" id="choiceGroupChipA"></div>
+          <div class="score-chip"><span class="score-num" id="choiceScoreNumA">0</span><span class="score-label">points</span></div>
         </div>
+        <div class="board-stage" id="choiceBoardStageA">
+          <div class="board-inner"><div id="choiceCellLayerA" class="cell-layer"></div></div>
+        </div>
+        <div class="choice-options" id="choiceOptionsA"></div>
+      </div>
+      <div class="choice-side" id="choiceSideB">
+        <div class="status-row">
+          <div class="group-chip" id="choiceGroupChipB"></div>
+          <div class="score-chip"><span class="score-num" id="choiceScoreNumB">0</span><span class="score-label">points</span></div>
+        </div>
+        <div class="board-stage" id="choiceBoardStageB">
+          <div class="board-inner"><div id="choiceCellLayerB" class="cell-layer"></div></div>
+        </div>
+        <div class="choice-options" id="choiceOptionsB"></div>
       </div>
     </div>
+    <div class="pair-status-line" id="choiceStatusLine"></div>
+    <button class="primary-btn" id="choiceNextBtn" hidden>Next →</button>
   </div>
 
   <!-- ===== 5. growth screen ===== -->
-  <!-- Top to bottom: masthead (above), group/score, current action, board,
-       result/end-game - the board is a fixed step in that order now rather
-       than sharing a row with the side info, so it never crowds the status
-       above it. -->
+  <!-- Same two-column pattern as choiceOverlay: each side is a fully
+       independent board the matching group taps on, gated by a shared
+       pair-status line/button at the bottom instead of advancing the moment
+       one side finishes. -->
   <div class="growth-screen" id="growthScreen" hidden>
-    <div class="status-row">
-      <div class="group-chip" id="growthGroupChip"></div>
-      <div class="score-chip"><span class="score-num" id="growthScoreNum">0</span><span class="score-label">points</span></div>
-    </div>
-    <div class="growth-instruction" id="growthInstruction"></div>
-    <div class="board-stage wide" id="boardStage">
-      <div class="board-inner">
-        <div id="cellLayer" class="cell-layer"></div>
-        <div class="celebrate" id="celebrateLayer">
-          <svg class="icon-svg" viewBox="0 0 100 100" aria-hidden="true">
-            <path d="M50 2L59.9 40.1L98 50L59.9 59.9L50 98L40.1 59.9L2 50L40.1 40.1Z" fill="#F0B93E"/>
-            <circle cx="80" cy="20" r="6" fill="#F5C452"/>
-            <circle cx="18" cy="78" r="4.5" fill="#F5C452"/>
-          </svg>
+    <div class="growth-pair" id="growthPair">
+      <div class="growth-side" id="growthSideA">
+        <div class="status-row">
+          <div class="group-chip" id="growthGroupChipA"></div>
+          <div class="score-chip"><span class="score-num" id="growthScoreNumA">0</span><span class="score-label">points</span></div>
         </div>
+        <div class="growth-instruction" id="growthInstructionA"></div>
+        <div class="board-stage" id="boardStageA">
+          <div class="board-inner">
+            <div id="cellLayerA" class="cell-layer"></div>
+            <div class="celebrate" id="celebrateLayerA">
+              <svg class="icon-svg" viewBox="0 0 100 100" aria-hidden="true">
+                <path d="M50 2L59.9 40.1L98 50L59.9 59.9L50 98L40.1 59.9L2 50L40.1 40.1Z" fill="#F0B93E"/>
+                <circle cx="80" cy="20" r="6" fill="#F5C452"/>
+                <circle cx="18" cy="78" r="4.5" fill="#F5C452"/>
+              </svg>
+            </div>
+          </div>
+        </div>
+        <div id="resultSlotA"></div>
+      </div>
+      <div class="growth-side" id="growthSideB">
+        <div class="status-row">
+          <div class="group-chip" id="growthGroupChipB"></div>
+          <div class="score-chip"><span class="score-num" id="growthScoreNumB">0</span><span class="score-label">points</span></div>
+        </div>
+        <div class="growth-instruction" id="growthInstructionB"></div>
+        <div class="board-stage" id="boardStageB">
+          <div class="board-inner">
+            <div id="cellLayerB" class="cell-layer"></div>
+            <div class="celebrate" id="celebrateLayerB">
+              <svg class="icon-svg" viewBox="0 0 100 100" aria-hidden="true">
+                <path d="M50 2L59.9 40.1L98 50L59.9 59.9L50 98L40.1 59.9L2 50L40.1 40.1Z" fill="#F0B93E"/>
+                <circle cx="80" cy="20" r="6" fill="#F5C452"/>
+                <circle cx="18" cy="78" r="4.5" fill="#F5C452"/>
+              </svg>
+            </div>
+          </div>
+        </div>
+        <div id="resultSlotB"></div>
       </div>
     </div>
-    <div id="resultSlot"></div>
+    <div class="pair-status-line" id="growthStatusLine"></div>
+    <button class="primary-btn" id="growthNextBtn" hidden>Next →</button>
     <div class="end-game-row"><button class="ghost-btn" id="endGameBtn">End Game</button></div>
   </div>
 
@@ -703,20 +740,6 @@
     <h2>Final Results</h2>
     <div class="results-grid" id="resultsGrid"></div>
     <button class="primary-btn" id="restartBtn">Play Again</button>
-  </div>
-</div>
-
-<!-- Fixed popup for the draw reveal card - sits outside .app so it's always
-     centered in the viewport no matter how tall the board above it is. -->
-<div class="reveal-overlay" id="revealOverlay">
-  <div class="reveal-card">
-    <div class="status-row">
-      <div class="group-chip" id="choiceGroupChip"></div>
-      <div class="score-chip"><span class="score-num" id="choiceScoreNum">0</span><span class="score-label">points</span></div>
-    </div>
-    <div class="side-title">This Turn's Event</div>
-    <div class="choice-options" id="choiceOptions"></div>
-    <button class="primary-btn" id="revealContinueBtn" hidden>Continue →</button>
   </div>
 </div>
 
@@ -945,6 +968,10 @@
   var state = null;
 
   function el(id){ return document.getElementById(id); }
+  // Two groups act at once now, each bound to a DOM "slot" ('A' or 'B') -
+  // every per-side id is just the base id with the slot letter appended
+  // (e.g. 'boardStage' + 'A' = 'boardStageA').
+  function elSlot(base, slot){ return el(base + slot); }
   function clamp(v,min,max){ return Math.max(min, Math.min(max, v)); }
   function key(col,row){ return col + ',' + row; }
 
@@ -1185,11 +1212,11 @@
     groupEl.textContent = group.name;
     animateScoreNum(scoreEl, totalScore(group));
   }
-  function refreshGrowthStatus(group){
-    setStatusChips(el('growthGroupChip'), el('growthScoreNum'), group);
+  function refreshGrowthStatus(slot, group){
+    setStatusChips(elSlot('growthGroupChip',slot), elSlot('growthScoreNum',slot), group);
   }
-  function refreshChoiceStatus(group){
-    setStatusChips(el('choiceGroupChip'), el('choiceScoreNum'), group);
+  function refreshChoiceStatus(slot, group){
+    setStatusChips(elSlot('choiceGroupChip',slot), elSlot('choiceScoreNum',slot), group);
   }
 
   // ---------- setup screen ----------
@@ -1268,7 +1295,7 @@
       });
       groups[i].cells[key(0,0)] = 'seed';
     }
-    state = { radius: radius, groups: groups, currentIndex: 0, viewingIndex: 0, round: 1, maxRounds: maxRounds, pending: null, allowSetbacks: allowSetbacks };
+    state = { radius: radius, groups: groups, pairs: buildPairs(groups), pairIndex: 0, round: 1, maxRounds: maxRounds, allowSetbacks: allowSetbacks, turn: null };
 
     hide(el('setupCard'));
     var list = el('readyList');
@@ -1290,16 +1317,31 @@
   el('tutorialContinueBtn').addEventListener('click', function(){
     hide(el('tutorialScreen'));
     show(el('turnIntro'));
-    showTurnIntro();
+    startPairTurn();
   });
   el('tutorialSkipBtn').addEventListener('click', function(){
     hide(el('tutorialScreen'));
     show(el('turnIntro'));
-    showTurnIntro();
+    startPairTurn();
   });
 
   // ---------- turn helpers ----------
-  function currentGroup(){ return state.groups[state.currentIndex]; }
+  // Two groups act at once, paired up in setup order (1st+2nd, 3rd+4th, ...);
+  // an odd group out plays a "pair of one" alone rather than waiting for a
+  // partner. Built once at game start - pairing never reshuffles mid-game.
+  function buildPairs(groups){
+    var pairs = [];
+    for(var i=0; i<groups.length; i+=2){
+      pairs.push(i+1 < groups.length ? [i,i+1] : [i]);
+    }
+    return pairs;
+  }
+  var SLOTS = ['A','B'];
+  function currentPair(){ return state.pairs[state.pairIndex]; }
+  // Which slot letters are actually in play this turn - just ['A'] for a
+  // solo leftover group.
+  function activeSlots(){ return currentPair().length === 2 ? SLOTS : ['A']; }
+  function groupForSlot(slot){ return state.groups[currentPair()[slot === 'A' ? 0 : 1]]; }
 
   // A group is "fully grown" once every branch (light/wall/root) is out of
   // legal targets - boxed in by the boundary, or the half is completely
@@ -1316,39 +1358,134 @@
     return false;
   }
 
+  // Targets a growth outcome can land on, or cells a setback can safely
+  // remove - a pure function of the group + its own pending step, no global
+  // "current" anything, since two groups can each have their own pending
+  // step live at once.
+  function validTargetsFor(group, pending){
+    if(!pending) return [];
+    var outcome = pending.outcome;
+    if(outcome.kind === 'growth') return computeGrowthTargets(group, outcome);
+    return removableCells(group, outcome.part);
+  }
+
+  // Rebuilds state.turn for the pair now at state.pairIndex - one entry per
+  // active slot, tracking that slot's own in-progress step (pending),
+  // once-per-turn wall bonus flag, and whether it's finished each of the
+  // turn's two shared steps (drawDone/growthDone) yet. A group that's
+  // already fully grown starts both flags true - it has nothing to do this
+  // turn, so it never blocks its partner from reaching the shared "Next".
+  function startPairTurn(){
+    state.turn = {};
+    activeSlots().forEach(function(slot){
+      var g = groupForSlot(slot);
+      state.turn[slot] = {
+        pending: null, wallBonusUsed: false, noEffectOutcome: null,
+        drawDone: g.finished, growthDone: g.finished
+      };
+    });
+    // A solo leftover group just gets the B column hidden - the board stays
+    // exactly the same size as it is in a real pair, just centered alone.
+    var solo = activeSlots().length === 1;
+    el('choiceSideB').hidden = solo;
+    el('growthSideB').hidden = solo;
+    showTurnIntro();
+  }
+
   // ---------- phase 1: turn intro ----------
-  // A "fully grown" group has nothing left to draw, so its turn just shows
-  // that and moves on - no Draw button, no wasted card reveal.
+  // Just announces the pair - the actual per-group Draw buttons live on the
+  // choice screen next. If every group in this pair is already fully grown
+  // there's nothing to draw at all, so this screen's one button just skips
+  // straight past both the choice and growth screens (same shortcut the
+  // original single-group version had for a finished group).
   function showTurnIntro(){
-    var g = currentGroup();
+    var slots = activeSlots();
     var nameEl = el('introName');
-    nameEl.textContent = g.name;
-    nameEl.style.color = g.color;
+    nameEl.innerHTML = slots.map(function(s){
+      var g = groupForSlot(s);
+      return '<span style="color:'+g.color+'">'+g.name+'</span>';
+    }).join('<span class="vs-label">vs</span>');
     var drawBtn = el('drawBtn');
-    if(g.finished){
-      el('introRound').textContent = 'Fully Grown! · ' + totalScore(g) + ' pts';
+    var allFinished = slots.every(function(s){ return groupForSlot(s).finished; });
+    if(allFinished){
+      var pts = slots.map(function(s){ return totalScore(groupForSlot(s)); }).join(' / ');
+      el('introRound').textContent = 'Fully Grown! · ' + pts + ' pts';
       drawBtn.textContent = 'Continue →';
       var advanced = false;
       var advanceOnce = function(){
         if(advanced) return;
         advanced = true;
         clearTimeout(skipTimer);
-        advanceTurn();
+        finishPairTurn();
       };
       drawBtn.onclick = advanceOnce;
       var skipTimer = setTimeout(advanceOnce, 2200);
     } else {
       el('introRound').textContent = 'Round ' + state.round + ' of ' + state.maxRounds;
-      drawBtn.textContent = 'Draw';
+      drawBtn.textContent = 'Draw →';
       drawBtn.onclick = function(){
-        state.viewingIndex = state.currentIndex;
-        state.turnWallBonusUsed = false;
-        startDraw();
+        hide(el('turnIntro'));
+        show(el('choiceOverlay'));
+        beginChoicePhase();
       };
     }
   }
 
+  // ---------- shared pair-progress gate ----------
+  // Both the choice screen (step 1: draw) and growth screen (step 2: pick
+  // cells) work the same way: each active side finishes independently and
+  // whichever finishes first just waits - the shared Next button for that
+  // step only appears once every active side is done.
+  function updatePairProgress(kind){
+    var doneKey = kind === 'choice' ? 'drawDone' : 'growthDone';
+    var sidePrefix = kind === 'choice' ? 'choiceSide' : 'growthSide';
+    var slots = activeSlots();
+    var notDone = slots.filter(function(s){ return !state.turn[s][doneKey]; });
+    slots.forEach(function(s){
+      elSlot(sidePrefix, s).classList.toggle('side-done', state.turn[s][doneKey]);
+    });
+    var statusEl = el(kind === 'choice' ? 'choiceStatusLine' : 'growthStatusLine');
+    var btn = el(kind === 'choice' ? 'choiceNextBtn' : 'growthNextBtn');
+    if(notDone.length === 0){
+      statusEl.textContent = '';
+      if(kind === 'growth') btn.textContent = willGameEnd() ? 'See Results' : 'Next →';
+      show(btn);
+    } else {
+      hide(btn);
+      statusEl.textContent = slots.length > 1
+        ? ('等待 ' + notDone.map(function(s){ return groupForSlot(s).name; }).join(' / ') + ' 組...')
+        : '';
+    }
+  }
+
   var REDUCE_MOTION = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  // Sets up each active side's panel on the choice screen: a finished
+  // group just shows a static note (already counted done), everyone else
+  // gets their own Draw button, tapped independently whenever that group is
+  // ready - not in lockstep with their partner.
+  function beginChoicePhase(){
+    activeSlots().forEach(function(slot){
+      var g = groupForSlot(slot);
+      refreshChoiceStatus(slot, g);
+      renderBoardInto(elSlot('choiceBoardStage',slot), elSlot('choiceCellLayer',slot), g, false);
+      var action = elSlot('choiceOptions', slot);
+      action.innerHTML = '';
+      if(g.finished){
+        var note = document.createElement('div');
+        note.className = 'fully-grown-note';
+        note.textContent = 'Fully Grown! · ' + totalScore(g) + ' pts';
+        action.appendChild(note);
+      } else {
+        var btn = document.createElement('button');
+        btn.className = 'primary-btn';
+        btn.textContent = 'Draw';
+        btn.onclick = function(){ btn.disabled = true; startDraw(slot); };
+        action.appendChild(btn);
+      }
+    });
+    updatePairProgress('choice');
+  }
 
   // A draw first decides growth vs. setback, then reveals whichever single
   // outcome it landed on through the same slot-machine screen either way,
@@ -1356,16 +1493,20 @@
   // the roll lands. There's no longer a choice of *which* outcome - the
   // player's agency is entirely in *where* it lands (or, for a setback,
   // which existing cell gets removed).
-  function startDraw(){
-    var group = currentGroup();
+  function startDraw(slot){
+    var group = groupForSlot(slot);
     var kind = group.drawDeck[group.drawIndex % group.drawDeck.length];
     group.drawIndex++;
     if(kind === 'damage'){
       var picked = SETBACK_OUTCOMES[Math.floor(Math.random()*SETBACK_OUTCOMES.length)];
-      showDrawReveal(picked, function(){
-        if(removableCells(group, picked.part).length === 0){ enterNoEffectPhase(picked); return; }
-        state.pending = { outcome: picked, remaining: 1 };
-        enterGrowthPhase(picked);
+      showDrawReveal(slot, picked, function(){
+        if(removableCells(group, picked.part).length === 0){
+          state.turn[slot].noEffectOutcome = picked;
+        } else {
+          state.turn[slot].pending = { outcome: picked, remaining: 1 };
+        }
+        state.turn[slot].drawDone = true;
+        updatePairProgress('choice');
       });
       return;
     }
@@ -1374,56 +1515,43 @@
     // fixes the "grown to the limit, drew the same direction again, board
     // has nothing to click" stuck state: a maxed-out branch just never
     // gets drawn. (In practice a fully-grown group never reaches here at
-    // all, since showTurnIntro skips its draw - this is just a safety net.)
+    // all, since beginChoicePhase skips its draw - this is just a safety net.)
     var pool = GROWTH_OUTCOMES.filter(function(o){ return computeGrowthTargets(group, o).length > 0; });
     if(pool.length === 0){
       checkMaturity(group);
       var placeholder = { icon:ICON_BLOCKED, title:'Nothing to Grow', desc:'Every direction is already full.' };
-      showDrawReveal(placeholder, function(){ enterNoEffectPhase(placeholder); });
+      showDrawReveal(slot, placeholder, function(){
+        state.turn[slot].noEffectOutcome = placeholder;
+        state.turn[slot].drawDone = true;
+        updatePairProgress('choice');
+      });
       return;
     }
     var picked = pool[Math.floor(Math.random()*pool.length)];
-    showDrawReveal(picked, function(){
-      state.pending = { outcome: picked, remaining: picked.steps, grown: 0 };
-      enterGrowthPhase(picked);
+    showDrawReveal(slot, picked, function(){
+      state.turn[slot].pending = { outcome: picked, remaining: picked.steps, grown: 0 };
+      state.turn[slot].drawDone = true;
+      updatePairProgress('choice');
     });
   }
 
   // Slot-machine style reveal: flick the card through random outcomes,
-  // slowing down, before landing on the one actually drawn. onContinue()
-  // runs once the player taps the landed card.
-  function showDrawReveal(outcome, onContinue){
-    hide(el('turnIntro'));
-    // Show the screen BEFORE measuring the board: while choiceOverlay is
-    // still [hidden], choiceBoardStage has display:none and getBoundingClientRect()
-    // reports 0 width, so the cell grid was getting sized for the wrong
-    // (fallback) width and only filling part of the actual board once it
-    // appeared.
-    show(el('choiceOverlay'));
-    var group = currentGroup();
-    refreshChoiceStatus(group);
-    renderBoardInto(el('choiceBoardStage'), el('choiceCellLayer'), group, false);
-    el('revealOverlay').classList.add('active');
-
-    var wrap = el('choiceOptions');
+  // slowing down, before landing on the one actually drawn - then, unlike
+  // the original single-group version, lands and resolves automatically
+  // (onContinue runs right away) rather than waiting for a "Continue" tap.
+  // The wait-for-the-class pause now happens once, pair-wide, at the shared
+  // Next button below both columns instead of once per side here.
+  function showDrawReveal(slot, outcome, onContinue){
+    var group = groupForSlot(slot);
+    var wrap = elSlot('choiceOptions', slot);
     wrap.innerHTML = '';
     var card = buildChoiceOptionShell();
     wrap.appendChild(card);
-    var continueBtn = el('revealContinueBtn');
-    hide(continueBtn);
 
-    // Waits for a tap rather than auto-advancing, so the teacher has time
-    // to talk through the event with the class before moving on.
     function land(){
       landChoiceOption(card, outcome);
       sfxLand();
-      show(continueBtn);
-      continueBtn.onclick = function(){
-        hide(continueBtn);
-        el('revealOverlay').classList.remove('active');
-        hide(el('choiceOverlay'));
-        onContinue(outcome);
-      };
+      onContinue(outcome);
     }
 
     if(REDUCE_MOTION){ land(); return; }
@@ -1477,13 +1605,36 @@
   }
 
   // ---------- phase 3: growth screen ----------
-  function enterGrowthPhase(outcome){
-    var g = currentGroup();
-    refreshGrowthStatus(g);
-    el('resultSlot').innerHTML = '';
-    show(el('growthScreen'));
-    updateGrowthInstruction();
-    renderBoard();
+  // Called once, when the shared choiceNextBtn is tapped (both sides have
+  // drawn) - switches the whole pair from the choice screen to the growth
+  // screen together, then resolves each side into whatever its own draw
+  // landed on: a normal growth/setback step, or an immediate "No Effect"
+  // for a group that's already finished/had nothing to draw into.
+  function beginGrowthPhase(){
+    activeSlots().forEach(function(slot){
+      var t = state.turn[slot];
+      if(t.noEffectOutcome){
+        enterNoEffectPhase(slot, t.noEffectOutcome);
+      } else if(t.pending){
+        enterGrowthPhase(slot, t.pending.outcome);
+      } else {
+        // Already-finished group: nothing was drawn, just show its status.
+        var g = groupForSlot(slot);
+        refreshGrowthStatus(slot, g);
+        elSlot('resultSlot', slot).innerHTML = '';
+        elSlot('growthInstruction', slot).innerHTML = '<div class="fully-grown-note">Fully Grown! · ' + totalScore(g) + ' pts</div>';
+        renderBoard(slot);
+      }
+    });
+    updatePairProgress('growth');
+  }
+
+  function enterGrowthPhase(slot, outcome){
+    var g = groupForSlot(slot);
+    refreshGrowthStatus(slot, g);
+    elSlot('resultSlot', slot).innerHTML = '';
+    updateGrowthInstruction(slot);
+    renderBoard(slot);
   }
 
   // Once-per-turn wall bonus: reuses the normal growth click flow via a
@@ -1493,7 +1644,7 @@
   // sunlight token, say) and maturity checks all work exactly like a normal
   // step. previousPoints carries the original step's points through so the
   // final banner shows one combined total, not a separate "wall bonus" line.
-  function startWallBonus(group, previousPoints){
+  function startWallBonus(slot, group, previousPoints){
     var pool = computeGrowthTargets(group, { branch:'stem' });
     var n = Math.min(1, pool.length);
     var bonusOutcome = {
@@ -1501,9 +1652,9 @@
       icon: ICON_WALL, title:'Wall Bonus!', desc:'Found a wall - pick where to grow!',
       previousPoints: previousPoints, isWallBonus: true
     };
-    state.pending = { outcome: bonusOutcome, remaining: n, grown: 0 };
-    updateGrowthInstruction();
-    renderBoard();
+    state.turn[slot].pending = { outcome: bonusOutcome, remaining: n, grown: 0 };
+    updateGrowthInstruction(slot);
+    renderBoard(slot);
   }
 
   function eventCardHtml(outcome){
@@ -1515,22 +1666,23 @@
         '</span>' +
       '</div>';
   }
-  function updateGrowthInstruction(){
-    el('growthInstruction').innerHTML = eventCardHtml(state.pending.outcome);
+  function updateGrowthInstruction(slot){
+    elSlot('growthInstruction', slot).innerHTML = eventCardHtml(state.turn[slot].pending.outcome);
   }
   // A draw that landed but has nowhere to apply (nothing left to grow, or
   // nothing left to remove) still shows the board and the event card -
   // just with a red "No Effect" instead of a tappable target, plus a
   // denial sound, rather than silently skipping straight to the next turn.
-  function enterNoEffectPhase(outcome){
-    var g = currentGroup();
-    refreshGrowthStatus(g);
-    el('resultSlot').innerHTML = '';
-    show(el('growthScreen'));
-    el('growthInstruction').innerHTML = eventCardHtml(outcome) + '<div class="no-effect-text">No Effect</div>';
-    renderBoard();
+  // Counts as this side being done with the growth step right away, same as
+  // a normal completed step.
+  function enterNoEffectPhase(slot, outcome){
+    var g = groupForSlot(slot);
+    refreshGrowthStatus(slot, g);
+    elSlot('resultSlot', slot).innerHTML = '';
+    elSlot('growthInstruction', slot).innerHTML = eventCardHtml(outcome) + '<div class="no-effect-text">No Effect</div>';
+    renderBoard(slot);
     sfxDenied();
-    finishStep('No Effect', false);
+    finishStep(slot, 'No Effect', false);
   }
 
   // A wall cell is a fixed landmark, not a growable spot - the stem grows
@@ -1605,28 +1757,21 @@
     }).map(function(k){ var p = k.split(','); return { col:+p[0], row:+p[1] }; });
   }
 
-  function currentValidTargets(){
-    if(!state.pending) return [];
-    var group = currentGroup();
-    var outcome = state.pending.outcome;
-    if(outcome.kind === 'growth') return computeGrowthTargets(group, outcome);
-    return removableCells(group, outcome.part);
-  }
-
-  function onCellClick(col,row){
-    if(!state.pending || state.viewingIndex !== state.currentIndex) return;
-    var group = currentGroup();
-    var outcome = state.pending.outcome;
-    var targets = currentValidTargets();
-    var isMatch = targets.some(function(t){ return t.col===col && t.row===row; });
-    if(!isMatch){ flashInvalid(col,row); return; }
+  function onCellClick(slot, col, row){
+    var t = state.turn[slot];
+    if(!t || !t.pending) return;
+    var group = groupForSlot(slot);
+    var outcome = t.pending.outcome;
+    var targets = validTargetsFor(group, t.pending);
+    var isMatch = targets.some(function(tg){ return tg.col===col && tg.row===row; });
+    if(!isMatch){ flashInvalid(slot, col,row); return; }
 
     if(outcome.kind === 'growth'){
       var b = BRANCHES[outcome.branch];
       var k = key(col,row);
       group.cells[k] = b.part;
       (b.part === 'stem' ? group.stemOrder : group.rootOrder).push(k);
-      state.pending.grown++;
+      t.pending.grown++;
 
       // Landing on a water/nutrient/sunlight token scores it immediately
       // and consumes it.
@@ -1634,25 +1779,25 @@
         var resType = group.resources[k];
         delete group.resources[k];
         group.score += 1;
-        state.pending.bonusPoints = (state.pending.bonusPoints || 0) + 1;
+        t.pending.bonusPoints = (t.pending.bonusPoints || 0) + 1;
         // Sunlight cells get a little leaf mark, permanently - a small nod
         // to "this bit of stem is the one that actually caught the light."
         if(resType === 'sunlight') group.litCells[k] = true;
-        showBonusPopup(el('boardStage'), col, row, resType);
+        showBonusPopup(elSlot('boardStage',slot), col, row, resType);
       }
       // A stem cell planted beside a wall triggers a once-per-turn bonus:
       // 1 more player-picked cell, free. Remembered here and resolved after
       // this step fully lands, so it can't fire mid-step.
-      if(b.part === 'stem' && !state.turnWallBonusUsed && isAdjacentToWall(group, col, row)){
-        state.pending.wallTrigger = { col: col, row: row };
+      if(b.part === 'stem' && !t.wallBonusUsed && isAdjacentToWall(group, col, row)){
+        t.pending.wallTrigger = { col: col, row: row };
       }
       // Every successful placement raises totalScore by at least 1 (the
       // cell itself), possibly +1 more for a pickup above - one chime per
       // click covers both rather than layering two sounds.
       sfxScoreUp();
 
-      state.pending.remaining--;
-      var stepDone = state.pending.remaining <= 0;
+      t.pending.remaining--;
+      var stepDone = t.pending.remaining <= 0;
       // A bonus (grow x2) step can also run out of room after its first
       // click - if so, stop here instead of leaving an unclickable board.
       if(!stepDone && computeGrowthTargets(group, outcome).length === 0) stepDone = true;
@@ -1667,29 +1812,29 @@
         // bonus combined, plus whatever the original step already earned if
         // this is the wall-bonus continuation) - one combined figure for the
         // whole turn, never a separate "wall bonus +N" line.
-        var stepPoints = state.pending.grown + (state.pending.bonusPoints || 0) + (outcome.previousPoints || 0);
+        var stepPoints = t.pending.grown + (t.pending.bonusPoints || 0) + (outcome.previousPoints || 0);
 
-        var wallTrigger = state.pending.wallTrigger;
-        state.pending = null;
+        var wallTrigger = t.pending.wallTrigger;
+        t.pending = null;
         var bonusPool = wallTrigger ? computeGrowthTargets(group, { branch:'stem' }) : [];
         if(bonusPool.length > 0){
-          state.turnWallBonusUsed = true;
-          renderBoard();
-          refreshGrowthStatus(group);
-          startWallBonus(group, stepPoints);
+          t.wallBonusUsed = true;
+          renderBoard(slot);
+          refreshGrowthStatus(slot, group);
+          startWallBonus(slot, group, stepPoints);
           return;
         }
 
         var msg = '+' + stepPoints + ' points';
         if(justMatured) msg += ' — fully grown!';
 
-        renderBoard();
-        refreshGrowthStatus(group);
-        finishStep(msg, justMatured);
+        renderBoard(slot);
+        refreshGrowthStatus(slot, group);
+        finishStep(slot, msg, justMatured);
       } else {
-        renderBoard();
-        refreshGrowthStatus(group);
-        updateGrowthInstruction();
+        renderBoard(slot);
+        refreshGrowthStatus(slot, group);
+        updateGrowthInstruction(slot);
       }
     } else {
       var removedKey = key(col,row);
@@ -1698,71 +1843,66 @@
       var idx = orderArr.indexOf(removedKey);
       if(idx !== -1) orderArr.splice(idx, 1);
       var msg2 = '-1 points';
-      state.pending = null;
+      t.pending = null;
       sfxSetback();
-      renderBoard();
-      refreshGrowthStatus(group);
-      finishStep(msg2, false);
+      renderBoard(slot);
+      refreshGrowthStatus(slot, group);
+      finishStep(slot, msg2, false);
     }
   }
 
-  function flashInvalid(col,row){
-    var target = document.querySelector('#cellLayer [data-col="'+col+'"][data-row="'+row+'"]');
+  function flashInvalid(slot, col, row){
+    var target = document.querySelector('#cellLayer'+slot+' [data-col="'+col+'"][data-row="'+row+'"]');
     if(!target) return;
     target.classList.remove('shake');
     void target.offsetWidth;
     target.classList.add('shake');
   }
 
-  // True if this group's turn is the very last one before the fixed round
-  // count runs out - drives the "See Results" vs "Next Group" button label.
+  // True only for the very last pair of the very last round - drives the
+  // shared growth-step button's "See Results" vs "Next" label, and whether
+  // finishing this pair's turn skips the round overview and jumps straight
+  // to the final results screen.
+  function isLastPairOfRound(){ return state.pairIndex >= state.pairs.length - 1; }
   function willGameEnd(){
-    var n = state.groups.length;
-    var next = (state.currentIndex+1) % n;
-    var nextRound = (next <= state.currentIndex) ? state.round+1 : state.round;
-    return nextRound > state.maxRounds;
+    return isLastPairOfRound() && state.round === state.maxRounds;
   }
 
-  function finishStep(message, celebrated){
-    state.pending = null;
-    if(celebrated) fireCelebration();
-    var isLast = willGameEnd();
+  // Marks this side as done with the growth step (result banner shown, no
+  // per-side button anymore - see updatePairProgress for the shared Next
+  // button that gates moving on once every active side has called this).
+  function finishStep(slot, message, celebrated){
+    state.turn[slot].pending = null;
+    if(celebrated) fireCelebration(slot);
 
-    var slot = el('resultSlot');
-    slot.innerHTML = '';
+    var resultEl = elSlot('resultSlot', slot);
+    resultEl.innerHTML = '';
     var banner = document.createElement('div');
     banner.className = 'result-banner';
     var msg = document.createElement('div');
     msg.textContent = message;
-    var nextBtn = document.createElement('button');
-    nextBtn.className = 'primary-btn';
-    nextBtn.textContent = isLast ? 'See Results' : 'Next Group →';
     banner.appendChild(msg);
-    banner.appendChild(nextBtn);
-    slot.appendChild(banner);
+    resultEl.appendChild(banner);
 
-    // Waits for a tap rather than auto-advancing, same as the reveal card
-    // and the overview screen - so nothing rushes past before the teacher
-    // (or the group itself) has actually seen the result.
-    nextBtn.addEventListener('click', function(){
-      if(isLast){ showResults(); } else { goToNextTurn(); }
-    });
+    state.turn[slot].growthDone = true;
+    updatePairProgress('growth');
   }
 
-  function fireCelebration(){
-    var layer = el('celebrateLayer');
+  function fireCelebration(slot){
+    var layer = elSlot('celebrateLayer', slot);
     layer.classList.remove('show');
     void layer.offsetWidth;
     layer.classList.add('show');
   }
 
-  // ---------- between-turn overview ----------
-  function goToNextTurn(){
+  // ---------- between-round overview ----------
+  // Shown once per round, after every pair (including a solo leftover
+  // group) has finished its turn - not once per pair like the original
+  // per-group version did.
+  function showRoundOverview(){
     hide(el('growthScreen'));
     hide(el('turnIntro'));
     hide(el('choiceOverlay'));
-    el('revealOverlay').classList.remove('active');
-    var justPlayed = currentGroup();
     // Show BEFORE building the mini boards below: renderBoardInto measures
     // each stage's real width, and a still-[hidden] ancestor reports 0.
     show(el('overviewScreen'));
@@ -1773,7 +1913,6 @@
       item.className = 'overview-item';
       var stage = document.createElement('div');
       stage.className = 'mini-stage';
-      if(!g.finished && g === justPlayed) stage.style.boxShadow = '0 0 0 3px ' + g.color + ', var(--shadow)';
       var inner = document.createElement('div');
       inner.className = 'board-inner';
       var layer = document.createElement('div');
@@ -1830,27 +1969,55 @@
     // there's time to talk through how everyone's doing before moving on.
     el('overviewContinueBtn').onclick = function(){
       hide(el('overviewScreen'));
-      advanceTurn();
+      advancePair();
     };
   }
 
   // ---------- advance turn: growth -> next intro ----------
-  // Plain round-robin through every group, fully-grown or not - a fully
-  // grown group's turn just shows that in showTurnIntro() and moves on.
-  // The fixed round count is the only end condition: once the rotation
-  // would wrap past state.maxRounds, the game ends instead.
-  function advanceTurn(){
-    var n = state.groups.length;
-    var next = (state.currentIndex+1) % n;
-    if(next <= state.currentIndex) state.round++;
-    state.currentIndex = next;
-    state.viewingIndex = next;
-    state.pending = null;
-    if(state.round > state.maxRounds){ showResults(); return; }
+  // Called once the current pair's turn is fully over (both sides done, or
+  // skipped because they were already fully grown) - decides whether that
+  // was worth a round overview or the final results screen first.
+  function finishPairTurn(){
     hide(el('growthScreen'));
-    show(el('turnIntro'));
-    showTurnIntro();
+    hide(el('turnIntro'));
+    hide(el('choiceOverlay'));
+    if(willGameEnd()){
+      showResults();
+    } else if(isLastPairOfRound()){
+      showRoundOverview();
+    } else {
+      advancePair();
+    }
   }
+
+  // Plain round-robin through every pair, fully-grown or not - a pair whose
+  // groups are all fully grown just shows that in showTurnIntro() and moves
+  // on. The fixed round count is the only end condition: once the rotation
+  // would wrap past state.maxRounds, the game ends instead.
+  function advancePair(){
+    hide(el('growthScreen'));
+    hide(el('turnIntro'));
+    hide(el('choiceOverlay'));
+    hide(el('overviewScreen'));
+    if(isLastPairOfRound()){
+      state.pairIndex = 0;
+      state.round++;
+    } else {
+      state.pairIndex++;
+    }
+    if(state.round > state.maxRounds){ showResults(); return; }
+    show(el('turnIntro'));
+    startPairTurn();
+  }
+
+  el('choiceNextBtn').addEventListener('click', function(){
+    hide(el('choiceOverlay'));
+    show(el('growthScreen'));
+    beginGrowthPhase();
+  });
+  el('growthNextBtn').addEventListener('click', function(){
+    finishPairTurn();
+  });
 
   el('endGameBtn').addEventListener('click', showResults);
 
@@ -1873,7 +2040,6 @@
     hide(el('turnIntro'));
     hide(el('choiceOverlay'));
     hide(el('overviewScreen'));
-    el('revealOverlay').classList.remove('active');
     // Show BEFORE building the boards below - renderBoardInto measures
     // each stage's real width, and a still-hidden ancestor reports 0.
     show(el('resultsScreen'));
@@ -1926,7 +2092,6 @@
   }
 
   function resetToSetup(){
-    el('revealOverlay').classList.remove('active');
     el('confirmOverlay').classList.remove('active');
     hide(el('growthScreen')); hide(el('turnIntro')); hide(el('choiceOverlay')); hide(el('readyScreen'));
     hide(el('tutorialScreen')); hide(el('overviewScreen')); hide(el('resultsScreen'));
@@ -1996,7 +2161,9 @@
     popup.addEventListener('animationend', function(){ popup.remove(); });
   }
 
-  function renderBoardInto(stageEl, layerEl, group, interactive, simplified, bloomKey){
+  // pending and onClickFn are only needed when interactive=true - every
+  // read-only caller (overview/results/tutorial thumbnails) just omits them.
+  function renderBoardInto(stageEl, layerEl, group, interactive, simplified, bloomKey, pending, onClickFn){
     stageEl.classList.toggle('finished', group.finished);
     var m = boardMetrics(stageEl);
     var spacing = m.spacing, cx = m.cx, cy = m.cy, R = state.radius;
@@ -2004,10 +2171,10 @@
 
     layerEl.innerHTML = '';
 
-    var targets = interactive ? currentValidTargets() : [];
-    var isDamage = interactive && state.pending.outcome.kind === 'damage';
-    var isWallBonus = interactive && !!state.pending.outcome.isWallBonus;
-    var hlPart = interactive ? (isDamage ? state.pending.outcome.part : BRANCHES[state.pending.outcome.branch].part) : null;
+    var targets = interactive ? validTargetsFor(group, pending) : [];
+    var isDamage = interactive && pending.outcome.kind === 'damage';
+    var isWallBonus = interactive && !!pending.outcome.isWallBonus;
+    var hlPart = interactive ? (isDamage ? pending.outcome.part : BRANCHES[pending.outcome.branch].part) : null;
     var spanningParent = buildSpanningParents(group);
 
     for(var row=-R; row<=R; row++){
@@ -2053,9 +2220,9 @@
           d.setAttribute('role','button');
           d.setAttribute('tabindex','0');
           (function(cc,rr){
-            d.addEventListener('click', function(){ onCellClick(cc,rr); });
+            d.addEventListener('click', function(){ onClickFn(cc,rr); });
             d.addEventListener('keydown', function(e){
-              if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); onCellClick(cc,rr); }
+              if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); onClickFn(cc,rr); }
             });
           })(col,row);
         }
@@ -2238,12 +2405,17 @@
     el('tutorialContinueBtn').hidden = false;
   }
 
-  function renderBoard(){
-    var g = state.groups[state.viewingIndex];
-    var interactive = !!state.pending && state.viewingIndex === state.currentIndex;
-    renderBoardInto(el('boardStage'), el('cellLayer'), g, interactive);
+  function renderBoard(slot){
+    var g = groupForSlot(slot);
+    var pending = state.turn[slot].pending;
+    var interactive = !!pending;
+    renderBoardInto(elSlot('boardStage',slot), elSlot('cellLayer',slot), g, interactive, false, null, pending, function(col,row){ onCellClick(slot,col,row); });
   }
 
-  window.addEventListener('resize', function(){ if(state && !el('growthScreen').hidden) renderBoard(); });
+  window.addEventListener('resize', function(){
+    if(state && state.turn && !el('growthScreen').hidden){
+      activeSlots().forEach(function(slot){ renderBoard(slot); });
+    }
+  });
 })();
 </script>

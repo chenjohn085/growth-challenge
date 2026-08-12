@@ -37,12 +37,35 @@ Each screen is a top-level `<div>` toggled via `show()`/`hide()` (just
 `hidden` attribute). One `state` object (created in `el('startBtn')`'s
 handler) drives everything from setup onward; `null` before that.
 
+Two groups act **at once**, paired up in setup order (1st+2nd, 3rd+4th,
+...) - an odd group out plays a "pair of one" alone. Every screen from
+`turnIntro` onward is duplicated into two DOM columns, slot `'A'` and
+slot `'B'` (ids are just the base id + the slot letter, e.g.
+`boardStageA`/`boardStageB` - see `elSlot(base, slot)`), driven by
+`state.turn.A`/`state.turn.B`. A solo leftover group just gets slot `B`
+hidden (`.solo` class widens slot A back to roughly the original
+single-group board size - see `startPairTurn()`).
+
 ```
 setupCard → readyScreen → tutorialScreen (interactive) → turnIntro
-  → choiceOverlay (slot-machine draw reveal) → growthScreen (pick cells)
-  → overviewScreen (between turns) → ... loops until maxRounds ...
+  → choiceOverlay (each side draws independently, own slot-machine reveal)
+  → growthScreen (each side picks cells independently)
+  → ... loops pair by pair until every pair in the round has played ...
+  → overviewScreen (once per ROUND, not per pair - skipped entirely on the
+    very last pair of the very last round, which goes straight to results)
   → resultsScreen
 ```
+
+Within `choiceOverlay` and `growthScreen`, each active side finishes its
+own step independently and whichever finishes first just waits - a
+shared `pair-status-line` shows "等待 OO 組..." for whoever isn't done yet,
+and a shared `Next →` button (`choiceNextBtn`/`growthNextBtn`) only
+appears once **every** active side is done (see `updatePairProgress()`).
+This is why the old fixed-position `#revealOverlay` popup is gone: two
+side-by-side boards don't fit a single centered modal, so the draw-reveal
+card now lives inline in each side's own column and lands automatically
+(no per-side "Continue" tap) - the pause for the class now happens once,
+pair-wide, at the shared Next button instead of once per side.
 
 `resetToSetup()` (wired to the always-visible `.restart-fab`, with a custom
 confirm modal since `window.confirm()` is blocked inside the Artifact
@@ -52,14 +75,31 @@ sandbox) can jump back to setup from anywhere.
 
 ```js
 state = {
-  radius, groups, currentIndex, viewingIndex, round, maxRounds,
-  pending,          // null, or the in-progress growth/setback step
-  allowSetbacks,    // true = "Hard" mode, false = "Easy" mode (see Game modes)
-  turnWallBonusUsed // reset to false at the start of every group's turn
+  radius, groups, pairs, pairIndex, round, maxRounds,
+  allowSetbacks,   // true = "Hard" mode, false = "Easy" mode (see Game modes)
+  turn             // null, or { A: {...}, B?: {...} } for the pair now at pairIndex
 }
 ```
 
-Each entry in `groups`:
+`state.pairs` is built once at game start (`buildPairs()`), e.g. for 5
+groups: `[[0,1],[2,3],[4]]` - pairing never reshuffles mid-game.
+`activeSlots()` returns `['A','B']` or just `['A']` for a solo pair.
+`groupForSlot(slot)` resolves a slot letter to the actual group object for
+the pair currently at `state.pairIndex`.
+
+`state.turn[slot]` (rebuilt fresh every pair by `startPairTurn()`):
+
+```js
+{
+  pending,          // null, or the in-progress growth/setback step (was state.pending)
+  wallBonusUsed,    // reset to false at the start of every group's turn (was state.turnWallBonusUsed)
+  noEffectOutcome,  // set instead of `pending` when a draw landed but has nothing to apply
+  drawDone,         // true once this side has drawn (choice step) - starts true if group.finished
+  growthDone        // true once this side has finished picking cells (growth step) - same
+}
+```
+
+Each entry in `state.groups` (unchanged):
 
 ```js
 {
@@ -185,9 +225,14 @@ plant, only trim a leaf), `enterNoEffectPhase()` shows the card with a red
   `connectionShapeSvg()` draws a rounded "arm" toward each neighbor that's
   the same part (via `treeConnections`, see Loop handling above), plus a hub
   circle when 2+ arms meet — so a run of cells reads as one continuous vine.
-- **`renderBoardInto(stageEl, layerEl, group, interactive, simplified, bloomKey)`**
+- **`renderBoardInto(stageEl, layerEl, group, interactive, simplified, bloomKey, pending, onClickFn)`**
   is the one render function used everywhere (main board, draw-reveal board,
-  overview thumbnails, results thumbnails, tutorial board).
+  overview thumbnails, results thumbnails, tutorial board). `pending` and
+  `onClickFn` are only needed when `interactive=true` - every read-only
+  caller just omits them; `renderBoard(slot)` is the one caller that passes
+  them, resolving `state.turn[slot].pending` and a slot-bound click callback
+  so two boards can each have their own independent pending step at once
+  (no more implicit "current group" global).
   `simplified=true` skips grid/resource/wall rendering entirely and skips
   ungrown cells — used for every "just show the plant" context (mini boards,
   tutorial's final screen). `bloomKey` (from `topStemCellKey(group)`, the
