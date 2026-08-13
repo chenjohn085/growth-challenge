@@ -481,14 +481,22 @@
     width:100vw; margin-left:calc(50% - 50vw); margin-right:calc(50% - 50vw); padding:16px 20px 0;
   }
   .overview-screen h2{ font-size:1.3rem; font-weight:800; }
-  /* Fixed 4-column grid (not flex-wrap) so the row always holds exactly 4
-     thumbnails, in reading/rank order, regardless of group count or window
-     width - columns shrink together (via .mini-stage's fluid width below)
-     on a narrower screen instead of the row dropping to 3-per-row, and a
-     short last row still starts flush left under column 1 instead of
-     drifting to center. max-width caps how big the thumbnails get on a
-     very wide screen (1210px / 4 cols ~= the original fixed 280px). */
-  .overview-grid{ display:grid; grid-template-columns:repeat(4, 1fr); gap:26px; width:100%; max-width:1210px; }
+  /* Fixed-column grid (not flex-wrap) so a row always holds exactly as many
+     thumbnails as it should, in reading/rank order, regardless of window
+     width. --cols is set in JS (showRoundOverview/showResults) to
+     min(group count, 4): 2 or 3 groups get their own 2- or 3-wide row
+     instead of sitting left-packed in unused columns 3-4, while 5+ groups
+     still wrap at a fixed 4-per-row. minmax(0,280px) both caps thumbnail
+     size on a wide screen (so 2-3 groups don't blow up to fill the row)
+     and lets columns shrink together on a narrower one (so 4-across still
+     fits), and justify-content centers that column block as a whole - for
+     5+ groups a short last row still lands flush left under column 1
+     instead of drifting to center, because every row shares the same
+     column tracks. */
+  .overview-grid{
+    display:grid; grid-template-columns:repeat(var(--cols,4), minmax(0,280px)); justify-content:center;
+    gap:26px; width:100%; max-width:1210px;
+  }
   .overview-item{ display:flex; flex-direction:column; align-items:center; gap:12px; }
   .mini-stage{
     position:relative; width:100%; aspect-ratio:1/1; background:var(--card-bg); padding:8px; box-sizing:border-box;
@@ -551,13 +559,11 @@
   .results-icon{ width:60px; height:60px; }
   .results-icon .icon-svg{ width:100%; height:100%; }
   .results-screen h2{ font-size:1.8rem; font-weight:800; }
-  /* Left-to-right, 1st place first - fixed 4-column grid (see
-     .overview-grid for why: keeps reading order clear on a short last row
-     and holds the row at exactly 4 regardless of window width) instead of
-     flex-wrap. */
+  /* Left-to-right, 1st place first - same --cols-driven grid as
+     .overview-grid (see there for why) instead of flex-wrap. */
   .results-grid{
-    display:grid; grid-template-columns:repeat(4, 1fr); gap:24px;
-    width:100%; max-width:1210px;
+    display:grid; grid-template-columns:repeat(var(--cols,4), minmax(0,280px)); justify-content:center;
+    gap:24px; width:100%; max-width:1210px;
   }
   .result-item{ display:flex; flex-direction:column; align-items:center; gap:10px; }
   .result-rank-badge{
@@ -575,9 +581,10 @@
   /* Below this, a 4-wide column is too narrow for the "POINTS" label under
      each thumbnail - it's a single word that can't wrap or ellipsis, so it
      sets a hard minimum column width and 4 columns would spill out of the
-     page past this point. Drop to 2 columns instead of letting that
-     overflow happen. Phone-width only; every desktop/tablet/projector case
-     above stays at 4. */
+     page past this point. Pin to 2 columns (overriding --cols, so even a
+     3-4 group game caps at 2-per-row here) instead of letting that overflow
+     happen. Phone-width only; every desktop/tablet/projector case above
+     this uses --cols as set in JS. */
   @media (max-width:900px){
     .overview-grid, .results-grid{ grid-template-columns:repeat(2, 1fr); }
   }
@@ -2018,6 +2025,9 @@
     show(el('overviewScreen'));
     var grid = el('overviewGrid');
     grid.innerHTML = '';
+    // 2-3 groups get their own 2/3-wide row (centered) instead of sitting
+    // left-packed in a grid still sized for 4 - see .overview-grid.
+    grid.style.setProperty('--cols', Math.min(state.groups.length, 4));
     state.groups.forEach(function(g){
       var item = document.createElement('div');
       item.className = 'overview-item';
@@ -2157,6 +2167,8 @@
     var sorted = state.groups.slice().sort(function(a,b){ return totalScore(b) - totalScore(a); });
     var grid = el('resultsGrid');
     grid.innerHTML = '';
+    // See showRoundOverview() - same reasoning, same --cols mechanism.
+    grid.style.setProperty('--cols', Math.min(state.groups.length, 4));
     var rank = 0, lastScore = null;
     sorted.forEach(function(g, i){
       var score = totalScore(g);
